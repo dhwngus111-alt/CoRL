@@ -1,0 +1,14 @@
+{
+  "python.terminal.activateEnvironment": true,
+  "editor.semanticHighlighting.enabled": true,
+  "workbench.iconTheme": "material-icon-theme",
+  "material-icon-theme.folders.associations": {
+    "overcooked": "Bower",
+    "HSP": "Class",
+    "test": "",
+    "transplant": "Helm",
+    "일지": "Interceptor",
+    "일지_HSP_risky_연결기록": "job",
+  },
+  "remote.autoForwardPortsFallback": 0
+}

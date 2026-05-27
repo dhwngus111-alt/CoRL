@@ -1,0 +1,182 @@
+LOG=/home/isl_jhoh/CoRL/transplant/logs/risky_full_gpu3_20260517_183859.log
+CUDA_VISIBLE_DEVICES=3
+
+
+
+=== Risky 환경 확인 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+bootstrap:
+  transplant_root: /home/isl_jhoh/CoRL/transplant
+  corl_root: /home/isl_jhoh/CoRL
+  hsp_root: /home/isl_jhoh/CoRL/HSP
+  risky_root: /home/isl_jhoh/CoRL/risky
+  risky_src: /home/isl_jhoh/CoRL/risky/src
+  compat_root: /home/isl_jhoh/CoRL/transplant/compat
+  policy_pool_root: /home/isl_jhoh/CoRL/transplant/policy_pool
+reset:
+  obs: [(7, 6, 28), (7, 6, 28)]
+  share_obs: (2, 7, 6, 56)
+  available_actions: (2, 6), uint8
+  render rgb_array: shape=(928, 1056, 3), dtype=uint8, min=0, max=255
+  step 1: action=[1, 3] reward=[[0.0], [0.0]] done=[False, False]
+  step 2: action=[2, 1] reward=[[0.0], [0.0]] done=[False, False]
+  step 3: action=[4, 3] reward=[[0.0], [0.0]] done=[False, False]
+  step 4: action=[1, 5] reward=[[0.0], [0.0]] done=[False, False]
+  step 5: action=[5, 1] reward=[[0.0], [0.0]] done=[False, False]
+last info keys: ['agent_infos', 'mdp_info', 'phi_s', 'phi_s_prime', 'risky_event_counts', 'risky_event_infos', 'shaped_info_by_agent', 'shaped_r_by_agent', 'sparse_r_by_agent', 'step_shaped_info_by_agent', 'stuck', 'vec_shaped_info_by_agent']
+  risky event dim: 38
+  vec_shaped_info_by_agent: (2, 38)
+  render gif: /home/isl_jhoh/CoRL/transplant/results/smoke_render/gifs/risky_multipath/traj_num_1/reward_0.gif
+smoke check complete
+
+
+
+=== Risky 환경 확인 종료 ===
+
+
+
+
+
+=== MEP S1 학습 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+dict_keys(['mep1', 'mep2', 'mep3', 'mep4', 'mep5', 'mep6', 'mep7', 'mep8', 'mep9', 'mep10', 'mep11', 'mep12']) 12 1
+population_size: 12, 12
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 0/6 episodes, total num timesteps 40000/240000, FPS 1190.
+
+average episode rewards is {'mep1': np.float32(0.315)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 1/6 episodes, total num timesteps 80000/240000, FPS 1194.
+
+average episode rewards is {'mep1': np.float32(0.315), 'mep10': np.float32(0.345)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 2/6 episodes, total num timesteps 120000/240000, FPS 1189.
+
+average episode rewards is {'mep1': np.float32(0.315), 'mep10': np.float32(0.345), 'mep11': np.float32(0.315)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 3/6 episodes, total num timesteps 160000/240000, FPS 1188.
+
+average episode rewards is {'mep1': np.float32(0.315), 'mep10': np.float32(0.345), 'mep11': np.float32(0.315), 'mep12': np.float32(0.39)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 4/6 episodes, total num timesteps 200000/240000, FPS 1189.
+
+average episode rewards is {'mep1': np.float32(0.315), 'mep10': np.float32(0.345), 'mep11': np.float32(0.315), 'mep12': np.float32(0.39), 'mep2': np.float32(0.044999998)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 5/6 episodes, total num timesteps 240000/240000, FPS 1189.
+
+average episode rewards is {'mep1': np.float32(0.315), 'mep10': np.float32(0.345), 'mep11': np.float32(0.315), 'mep12': np.float32(0.39), 'mep2': np.float32(0.044999998), 'mep3': np.float32(0.255)}
+
+
+
+=== MEP S1 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run3/models/mep1/actor_periodic_40.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep1_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep1/actor_periodic_9600.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep1_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run4/models/mep1/actor_periodic_80000.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep1_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep2/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep2_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep2/actor_periodic_3200.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep2_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run4/models/mep2/actor_periodic_80000.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep2_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep3/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep3_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep3/actor_periodic_3200.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep3_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run4/models/mep3/actor_periodic_80000.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep3_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep4/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep4_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run3/models/mep4/actor_periodic_400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep4_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep4/actor_periodic_38400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep4_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep5/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep5_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run3/models/mep5/actor_periodic_400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep5_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep5/actor_periodic_38400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep5_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep6/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep6_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run3/models/mep6/actor_periodic_400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep6_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep6/actor_periodic_38400.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/mep6_final_actor.pt
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/eval.yml
+
+
+
+=== HSP S1 학습 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+=== HSP S1 seed 1/1 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run5/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+
+
+=== HSP S1 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run1/models/actor_agent0_periodic_3.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run1/models/actor_agent1_periodic_3.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run2/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run2/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run3/models/actor_agent0_periodic_11.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run3/models/actor_agent1_periodic_11.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run4/models/actor_agent0_periodic_11.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run4/models/actor_agent1_periodic_11.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+warning: no actor_agent0 checkpoint under /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run5
+warning: no actor_agent1 checkpoint under /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run5
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/eval.yml
+
+
+
+=== HSP S1 이벤트 평가 시작 ===
+
+
+=== eval hsp1_w0 vs hsp1_w1 ===
+eval summary hsp1_w0-hsp1_w1: sparse=0, shaped=1.65, agent0_sparse=0, agent1_sparse=0
+=== eval hsp1_w1 vs hsp1_w0 ===
+eval summary hsp1_w1-hsp1_w0: sparse=0, shaped=1.5, agent0_sparse=0, agent1_sparse=0
+
+
+
+=== HSP S1 이벤트 평가 종료 ===
+
+
+selected runs: [1]
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/train.yml
+
+
+
+=== HSP S2 학습 시작 ===
+
+
+dict_keys(['mep1_1', 'mep1_2', 'mep1_3', 'mep2_1', 'mep2_2', 'mep2_3', 'mep3_1', 'mep3_2', 'mep3_3', 'mep4_1', 'mep4_2', 'mep4_3', 'mep5_1', 'mep5_2', 'mep5_3', 'mep6_1', 'mep6_2', 'mep6_3', 'hsp1']) 19 2
+population_size: 19, 19
+all agent pairs: [('hsp1', 'hsp_adaptive'), ('mep1_1', 'hsp_adaptive'), ('mep1_2', 'hsp_adaptive'), ('mep1_3', 'hsp_adaptive'), ('mep2_1', 'hsp_adaptive'), ('mep2_2', 'hsp_adaptive'), ('mep2_3', 'hsp_adaptive'), ('mep3_1', 'hsp_adaptive'), ('mep3_2', 'hsp_adaptive'), ('mep3_3', 'hsp_adaptive'), ('mep4_1', 'hsp_adaptive'), ('mep4_2', 'hsp_adaptive'), ('mep4_3', 'hsp_adaptive'), ('mep5_1', 'hsp_adaptive'), ('mep5_2', 'hsp_adaptive'), ('mep5_3', 'hsp_adaptive'), ('mep6_1', 'hsp_adaptive'), ('mep6_2', 'hsp_adaptive'), ('mep6_3', 'hsp_adaptive'), ('hsp_adaptive', 'hsp1'), ('hsp_adaptive', 'mep1_1'), ('hsp_adaptive', 'mep1_2'), ('hsp_adaptive', 'mep1_3'), ('hsp_adaptive', 'mep2_1'), ('hsp_adaptive', 'mep2_2'), ('hsp_adaptive', 'mep2_3'), ('hsp_adaptive', 'mep3_1'), ('hsp_adaptive', 'mep3_2'), ('hsp_adaptive', 'mep3_3'), ('hsp_adaptive', 'mep4_1'), ('hsp_adaptive', 'mep4_2'), ('hsp_adaptive', 'mep4_3'), ('hsp_adaptive', 'mep5_1'), ('hsp_adaptive', 'mep5_2'), ('hsp_adaptive', 'mep5_3'), ('hsp_adaptive', 'mep6_1'), ('hsp_adaptive', 'mep6_2'), ('hsp_adaptive', 'mep6_3')]
+
+
+
+=== HSP S2 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/adaptive/hsp-S2/run3/models/hsp_adaptive/actor_periodic_19200.pt -> /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/hsp_adaptive.pt
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/eval.yml
+
+
+
+=== HSP 최종 평가 시작 ===
+
+
+eval summary hsp_adaptive-mep1_3: sparse=0, shaped=1.05, agent0_sparse=0, agent1_sparse=0
+eval summary mep1_3-hsp_adaptive: sparse=0, shaped=1.8, agent0_sparse=0, agent1_sparse=0
+
+
+
+=== HSP 최종 평가 종료 ===
+
+
+DONE

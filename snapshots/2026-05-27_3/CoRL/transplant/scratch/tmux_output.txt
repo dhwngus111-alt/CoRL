@@ -1,0 +1,111 @@
+eval summary hsp12_w0-hsp12_w1:
+=== eval hsp12_w1 vs hsp12_w0 ===
+eval summary hsp12_w1-hsp12_w0:
+=== eval hsp13_w0 vs hsp13_w1 ===
+eval summary hsp13_w0-hsp13_w1:
+=== eval hsp13_w1 vs hsp13_w0 ===
+eval summary hsp13_w1-hsp13_w0:
+=== eval hsp14_w0 vs hsp14_w1 ===
+eval summary hsp14_w0-hsp14_w1:
+=== eval hsp14_w1 vs hsp14_w0 ===
+eval summary hsp14_w1-hsp14_w0:
+=== eval hsp15_w0 vs hsp15_w1 ===
+eval summary hsp15_w0-hsp15_w1:
+=== eval hsp15_w1 vs hsp15_w0 ===
+eval summary hsp15_w1-hsp15_w0:
+=== eval hsp16_w0 vs hsp16_w1 ===
+eval summary hsp16_w0-hsp16_w1:
+=== eval hsp16_w1 vs hsp16_w0 ===
+eval summary hsp16_w1-hsp16_w0:
+=== eval hsp17_w0 vs hsp17_w1 ===
+eval summary hsp17_w0-hsp17_w1:
+=== eval hsp17_w1 vs hsp17_w0 ===
+eval summary hsp17_w1-hsp17_w0:
+=== eval hsp18_w0 vs hsp18_w1 ===
+eval summary hsp18_w0-hsp18_w1:
+=== eval hsp18_w1 vs hsp18_w0 ===
+eval summary hsp18_w1-hsp18_w0:
+=== eval hsp19_w0 vs hsp19_w1 ===
+eval summary hsp19_w0-hsp19_w1:
+=== eval hsp19_w1 vs hsp19_w0 ===
+eval summary hsp19_w1-hsp19_w0:
+=== eval hsp20_w0 vs hsp20_w1 ===
+eval summary hsp20_w0-hsp20_w1:
+=== eval hsp20_w1 vs hsp20_w0 ===
+eval summary hsp20_w1-hsp20_w0:
+=== eval hsp21_w0 vs hsp21_w1 ===
+eval summary hsp21_w0-hsp21_w1:
+=== eval hsp21_w1 vs hsp21_w0 ===
+eval summary hsp21_w1-hsp21_w0:
+=== eval hsp22_w0 vs hsp22_w1 ===
+eval summary hsp22_w0-hsp22_w1:
+=== eval hsp22_w1 vs hsp22_w0 ===
+eval summary hsp22_w1-hsp22_w0:
+=== eval hsp23_w0 vs hsp23_w1 ===
+eval summary hsp23_w0-hsp23_w1:
+=== eval hsp23_w1 vs hsp23_w0 ===
+eval summary hsp23_w1-hsp23_w0:
+=== eval hsp24_w0 vs hsp24_w1 ===
+eval summary hsp24_w0-hsp24_w1:
+=== eval hsp24_w1 vs hsp24_w0 ===
+eval summary hsp24_w1-hsp24_w0:
+=== eval hsp25_w0 vs hsp25_w1 ===
+eval summary hsp25_w0-hsp25_w1:
+=== eval hsp25_w1 vs hsp25_w0 ===
+eval summary hsp25_w1-hsp25_w0:
+=== eval hsp26_w0 vs hsp26_w1 ===
+eval summary hsp26_w0-hsp26_w1:
+=== eval hsp26_w1 vs hsp26_w0 ===
+eval summary hsp26_w1-hsp26_w0:
+=== eval hsp27_w0 vs hsp27_w1 ===
+eval summary hsp27_w0-hsp27_w1:
+=== eval hsp27_w1 vs hsp27_w0 ===
+eval summary hsp27_w1-hsp27_w0:
+=== eval hsp28_w0 vs hsp28_w1 ===
+eval summary hsp28_w0-hsp28_w1:
+=== eval hsp28_w1 vs hsp28_w0 ===
+eval summary hsp28_w1-hsp28_w0:
+=== eval hsp29_w0 vs hsp29_w1 ===
+eval summary hsp29_w0-hsp29_w1:
+=== eval hsp29_w1 vs hsp29_w0 ===
+eval summary hsp29_w1-hsp29_w0:
+=== eval hsp30_w0 vs hsp30_w1 ===
+eval summary hsp30_w0-hsp30_w1:
+=== eval hsp30_w1 vs hsp30_w0 ===
+eval summary hsp30_w1-hsp30_w0:
+=== eval hsp31_w0 vs hsp31_w1 ===
+eval summary hsp31_w0-hsp31_w1:
+=== eval hsp31_w1 vs hsp31_w0 ===
+eval summary hsp31_w1-hsp31_w0:
+=== eval hsp32_w0 vs hsp32_w1 ===
+eval summary hsp32_w0-hsp32_w1:
+=== eval hsp32_w1 vs hsp32_w0 ===
+eval summary hsp32_w1-hsp32_w0:
+=== eval hsp33_w0 vs hsp33_w1 ===
+eval summary hsp33_w0-hsp33_w1:
+=== eval hsp33_w1 vs hsp33_w0 ===
+eval summary hsp33_w1-hsp33_w0:
+=== eval hsp34_w0 vs hsp34_w1 ===
+eval summary hsp34_w0-hsp34_w1:
+=== eval hsp34_w1 vs hsp34_w0 ===
+eval summary hsp34_w1-hsp34_w0:
+=== eval hsp35_w0 vs hsp35_w1 ===
+eval summary hsp35_w0-hsp35_w1:
+=== eval hsp35_w1 vs hsp35_w0 ===
+eval summary hsp35_w1-hsp35_w0:
+=== eval hsp36_w0 vs hsp36_w1 ===
+eval summary hsp36_w0-hsp36_w1:
+=== eval hsp36_w1 vs hsp36_w0 ===
+eval summary hsp36_w1-hsp36_w0:
+
+
+
+=== [05] HSP S1 이벤트 평가 종료 ===
+
+
+warning: no event logs found; selecting first available HSP S1 runs
+selected runs: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/train.yml
+(corl) (corl) isl_jhoh@islgpu2:~/CoRL$
+
+--- STDERR ---

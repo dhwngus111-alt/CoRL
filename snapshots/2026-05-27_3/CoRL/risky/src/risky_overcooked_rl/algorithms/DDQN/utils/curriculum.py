@@ -1,0 +1,736 @@
+"""
+논문 단계:
+    Risky Overcooked DDQN baseline의 curriculum training 단계.
+
+호출 위치:
+    DDQN 학습 설정에서 trainer를 curriculum trainer로 선택했을 때 사용된다.
+
+전체 역할:
+    쉬운 subtask 상태에서 시작해 점진적으로 full task까지 확장하는 curriculum을 관리한다.
+    각 rollout에서 상태를 샘플링하고, DDQN replay memory 업데이트와 curriculum 전환 여부를 처리한다.
+"""
+
+from risky_overcooked_py.mdp.overcooked_mdp import ObjectState,SoupState, Direction
+from risky_overcooked_rl.algorithms.DDQN.utils.trainer import Trainer
+import numpy as np
+from risky_overcooked_py.mdp.actions import Action
+from collections import deque
+import math
+import scipy.stats as stats
+debug = False
+
+from risky_overcooked_py.planning.planners import MotionPlanner
+
+class CurriculumTrainer(Trainer):
+    """DDQN Trainer에 curriculum 상태 샘플링과 curriculum 전환 로직을 붙인 학습 클래스."""
+
+    def __init__(self,model_object,master_config):
+        super().__init__(model_object,master_config)  # 얘가 trainer를 호출함.
+
+        # Parse Curriculum Config ---------
+        # curriculum_config: curriculum 단계, threshold, failure check 등을 담은 설정 dictionary.
+        curriculum_config = master_config['trainer']['curriculum']
+        # schedule_decay: curriculum이 다음 단계로 넘어갈 때 epsilon/reward shaping schedule을 얼마나 다시 줄일지 정한다.
+        self.schedule_decay = curriculum_config.get('schedule_decay',1.0)
+        # schedules: epsilon, reward shaping, random start 등 DDQN 학습 스케줄 묶음.
+        self.schedules = master_config['trainer']['schedules']
+        # curriculum: 현재 subtask 단계와 시작 상태 샘플링을 관리하는 객체.
+        self.curriculum = Curriculum(self.env,curriculum_config)
+
+
+    def run(self):
+        """전체 DDQN curriculum training loop를 실행한다."""
+
+        # Main training Loop
+        for it in range(self.ITERATIONS + self.EXTRA_ITERATIONS):
+            # it: 전체 trainer 기준 학습 iteration.
+            self.training_iteration = it
+            # cit: 현재 curriculum 단계 안에서의 iteration index.
+            cit = self.curriculum.iteration
+            self.logger.loop_iteration()
+            self.logger.spin()
+
+            ##########################################################
+            # Training Step ##########################################
+            self.iteration = it # for logging callbacks
+            self.epsilon = self.epsilon_sched[cit] # for logging callbacks
+            self.rshape_scale = self.rshape_sched[cit] # for logging callbacks
+            self.random_start = self.random_start_sched[cit] # for logging callbacks
+
+
+            # 한 episode rollout을 돌며 transition 저장, DDQN update, curriculum 관련 통계를 모은다.
+            cum_reward, cum_shaped_rewards, rollout_info = \
+                self.curriculum_rollout(cit,
+                                        rationality=self.rationality,
+                                        epsilon=self.epsilon_sched[cit],
+                                        rshape_scale=self.rshape_sched[cit],
+                                        p_rand_start=self.random_start_sched[cit])
+
+
+            did_update = (rollout_info['mean_loss']!=0)
+            self.risk_taken.append(rollout_info['risks_taken'])
+
+            if did_update:
+                self.model.update_target()  # performs soft update of target network
+
+                # TODO: Made edits here. CRITICAL
+                step_val = rollout_info['reward_latest_curriculum']
+                if step_val is not None:
+                    is_next_curriculum = self.curriculum.step_curriculum(step_val)
+                # is_next_curriculum = self.curriculum.step_curriculum(cum_reward)
+
+                if is_next_curriculum:
+                    self.init_sched(self.schedules, eps_decay=self.schedule_decay, rshape_decay=self.schedule_decay)
+
+                if self.curriculum.curr_curriculum_name in self.curriculum.curriculums[-3:-1]:
+                    self.logger.enable_checkpointing(True)
+
+            # Report ###########################################
+            if self.enable_report:
+                self.report(it,cum_reward,cum_shaped_rewards,rollout_info)
+
+            self.logger.log(train_reward=[it, cum_reward + np.mean(cum_shaped_rewards)],
+                            loss=[it, rollout_info['mean_loss']],
+                            # eps=self.epsilon_sched[cit]
+                            )
+
+            # Testing Step ##########################################
+            time4test = (it % self.test_interval == 0)
+            if time4test:
+                self.curriculum.eval('on')
+
+                # Rollout test episodes ----------------------
+                test_rewards = []
+                test_shaped_rewards = []
+                for test in range(self.N_tests):
+                    test_reward, test_shaped_reward, state_history, action_history, aprob_history =\
+                        self.test_rollout(rationality=self.test_rationality)
+                    test_rewards.append(test_reward)
+                    test_shaped_rewards.append(test_shaped_reward)
+                self.state_history = state_history
+
+                # Logging ----------------------
+                self.logger.log(test_reward=[it, np.mean(test_rewards)])
+                self.logger.draw()
+                if self.enable_report:
+                    print(f"\nTest: | nTests= {self.N_tests} "
+                          f"| Ave Reward = {np.mean(test_rewards)} "
+                          f"| Ave Shaped Reward = {np.mean(test_shaped_rewards)}"
+                          )
+
+                self.curriculum.eval('off')
+
+            # Close Iteration ########################################
+            # Check if model training is failing and halt -----------
+            if self.curriculum.is_failing(it, self.ITERATIONS):
+                print(f"Model is failing to learn at Curriculum {self.curriculum.name}. Ending training...")
+                self.save(save_model=self.curriculum.save_model_on_fail, save_fig=self.curriculum.save_fig_on_fail)
+                break
+
+            ####### END TRAINING ON LOGGER CLOSED ########
+            if self.logger.is_closed:
+                print(f"Logger Closed at iteration {it}. Ending training...")
+                break
+
+        self.logger.halt()
+        self.logger.close_plots()
+        if self.auto_save and not self.curriculum.is_failing(it, self.ITERATIONS):
+            self.save(save_model=True, save_fig=True)
+
+    def curriculum_rollout(self, it, rationality,epsilon,rshape_scale,p_rand_start=0):
+        """샘플링된 curriculum 시작 상태에서 한 episode를 진행하고 DDQN replay/update 정보를 수집한다."""
+        init_epsilon = epsilon
+        self.model.rationality = rationality
+        self.env.reset()
+
+        # state: curriculum이 만든 시작 Overcooked state.
+        # sampled_curriculum: 이번 rollout에 실제로 사용된 subtask 이름.
+        state,sampled_curriculum = self.curriculum.sample_curriculum_state()
+        is_latest_curriculum = sampled_curriculum == self.curriculum.curr_curriculum_name
+        self.curriculum.subtask_iters[sampled_curriculum] += 1
+
+        # t_latest_curriculum/reward_latest_curriculum: 현재 최신 curriculum 단계에서만 쌓는 진행도 평가용 값.
+        t_latest_curriculum = 0  # total timesteps for this curriculum
+        reward_latest_curriculum = 0  # total sparse reward for this curriculum
+
+        if not is_latest_curriculum:
+            eps_gain = self.curriculum.completed_epsilon
+            epsilon = max(eps_gain * init_epsilon, self.epsilon_sched[-1]) if eps_gain is not None else epsilon
+    
+        self.env.state = state
+
+        # losses: DDQN update loss history.
+        losses = []
+        # cum_sparse_reward: episode 전체 sparse reward 합.
+        cum_sparse_reward = 0
+        # cum_shaped_reward: agent별 shaped reward 누적값, shape=(2,).
+        cum_shaped_reward = np.zeros(2)
+
+        # rollout_info: risk/slip/handoff/delivery 등 event 통계와 mean loss를 담는 logging dictionary.
+        rollout_info = {
+            'onion_risked': np.zeros([1, 2]),
+            'onion_pickup': np.zeros([1, 2]),
+            'onion_drop': np.zeros([1, 2]),
+            'onion_handoff': np.zeros([1, 2]),
+
+            'dish_risked': np.zeros([1, 2]),
+            'dish_pickup': np.zeros([1, 2]),
+            'dish_drop': np.zeros([1, 2]),
+            'dish_handoff': np.zeros([1, 2]),
+
+            'soup_risked': np.zeros([1, 2]),
+            'soup_pickup': np.zeros([1, 2]),
+            'soup_delivery': np.zeros([1, 2]),
+            'soup_drop': np.zeros([1, 2]),
+            'soup_handoff': np.zeros([1, 2]),
+
+            'soup_slip': np.zeros([1, 2]),
+            'onion_slip': np.zeros([1, 2]),
+            'dish_slip': np.zeros([1, 2]),
+
+            'mean_loss': 0
+        }
+
+
+        for t in range(self.env.horizon+1):#itertools.count():
+            if t%5==0: self.logger.spin()
+
+            old_state = self.env.state.deepcopy()
+            # obs: 현재 state의 lossless encoding tensor, shape=(1, obs_dim...).
+            obs = self.mdp.get_lossless_encoding_vector_astensor(self.env.state, device=self.device).unsqueeze(0)
+            # feasible_JAs: 현재 state에서 가능한 joint action index 목록.
+            feasible_JAs = self.feasible_action.get_feasible_joint_actions(self.env.state, as_joint_idx=True)
+            # joint_action_idx: DDQN이 선택한 joint action의 index.
+            joint_action, joint_action_idx, action_probs = self.model.choose_joint_action(obs,
+                                                                                          epsilon=epsilon,
+                                                                                          feasible_JAs=feasible_JAs)
+            next_state, sparse_reward, done, info = self.env.step(joint_action, get_mdp_info=True)
+            # next_state_prospects: Bellman target 계산에 쓰는 one-step lookahead 후보 next state 묶음.
+            next_state_prospects = self.mdp.one_step_lookahead(old_state, # must be called after step....
+                                                               joint_action=Action.ALL_JOINT_ACTIONS[joint_action_idx],
+                                                               as_tensor=True, device=self.device)
+
+            for key in rollout_info.keys():
+                if not key == 'mean_loss':
+                    rollout_info[key] += np.array(info['mdp_info']['event_infos'][key])
+
+
+            # Track reward traces
+            # shaped_rewards: agent별 reward shaping 값, shape=(2,).
+            shaped_rewards = rshape_scale * np.array(info["shaped_r_by_agent"])
+            cum_sparse_reward += sparse_reward
+            cum_shaped_reward += shaped_rewards
+
+            reward_latest_curriculum += sparse_reward if is_latest_curriculum else 0 #TODO: ReMOVE?
+            t_latest_curriculum += 1 if is_latest_curriculum else 0
+
+            # Store in memory ----------------
+            self.model._memory.double_push(state=obs,
+                                          action=joint_action_idx,
+                                          rewards=np.array([sparse_reward + shaped_rewards]).flatten(),
+                                          next_prospects=next_state_prospects,
+                                          done=done)
+            # Update model ----------------
+            if len(self.model._memory) > self.warmup_transitions:
+                loss = self.model.update()
+                if loss is not None:
+                    losses.append(loss)
+            else: losses.append(0)
+
+            # Terminate episode ##################################
+            if done:
+                break
+            elif self.curriculum.is_reset_needed(self.env.state,sparse_reward,info):  # Curriculum Complete, reset state in this episode
+                # Sample new curriculum state
+                self.env.state , sampled_curriculum= self.curriculum.sample_curriculum_state()
+                is_latest_curriculum = sampled_curriculum == self.curriculum.curr_curriculum_name
+                epsilon = init_epsilon if is_latest_curriculum else self.curriculum.completed_epsilon * init_epsilon
+                epsilon = max(epsilon, self.epsilon_sched[-1])
+            else:
+                self.env.state = next_state
+
+        rollout_info['mean_loss'] = np.mean(losses)
+
+        if t_latest_curriculum>0:
+            latest_reward_scale = self.env.horizon/t_latest_curriculum
+            rollout_info['reward_latest_curriculum'] = reward_latest_curriculum * latest_reward_scale
+        else:
+            rollout_info['reward_latest_curriculum'] = None
+
+        rollout_info['risks_taken'] = np.sum([np.sum(rollout_info[key]) for key in
+                            ['dish_risked','onion_risked','soup_risked']] )
+
+
+        return cum_sparse_reward, cum_shaped_reward, rollout_info
+
+    def report(self,it,cum_reward,cum_shaped_rewards,rollout_info):
+        """현재 iteration의 curriculum 이름, reward, loss, risk event를 콘솔에 출력한다."""
+        risks = rollout_info['onion_risked'] + rollout_info['dish_risked'] + rollout_info['soup_risked']
+        handoffs = rollout_info['onion_handoff'] + rollout_info['dish_handoff'] + rollout_info['soup_handoff']
+        cit = self.curriculum.iteration
+
+        print(f"[it:{it}"
+              f" {self.curriculum.curr_curriculum_name}:-{cit}]"
+              f"[R:{round(cum_reward, 3)} "
+              f" Rshape:{np.round(cum_shaped_rewards, 3)} "
+              f" L:{round(rollout_info['mean_loss'], 3)} ]"
+              # f"| slips:{slips} "
+              f"[ risks:{risks} "
+              f" handoffs:{handoffs} ]"
+              f" |"
+              f"| mem:{len(self.model._memory)} "
+              f"| rshape:{round(self.rshape_sched[cit], 3)} "
+              # f"| rat:{round(self.rationality, 3)}"
+              f"| eps:{round(self.epsilon_sched[cit], 3)} "
+              f"| LR={round(self.model.optimizer.param_groups[0]['lr'], 4)}"
+              f"| rstart={round(self.random_start_sched[cit], 3)}"
+              )
+
+
+
+class Curriculum:
+    """Curriculum 단계, 시작 상태 생성, 단계 전환 기준을 관리하는 클래스."""
+
+    def __init__(self, env, curriculum_config, **kwargs):
+        # Initiate variables and Get meta information ---------------------
+        # iteration: 현재 curriculum 단계 안에서 진행한 학습 iteration 수.
+        self.iteration = 0  # iteration for this curriculum
+        # current_curriculum: curriculums 리스트에서 현재 활성화된 curriculum index.
+        self.current_curriculum = kwargs.pop('current_curriculum',0)
+        # env/mdp: Risky Overcooked 환경 wrapper와 그 내부 MDP 상태전이 모델.
+        self.env = env
+        self.mdp = env.mdp
+
+
+        # Parse Curriculum Config ----------------
+        # sampling_decay: 이전 curriculum 단계들을 얼마나 자주 다시 샘플링할지 정하는 decay 값.
+        self.sampling_decay = curriculum_config['sampling_decay']
+        # min_iterations: reward threshold를 넘더라도 최소로 머물러야 하는 iteration 수.
+        self.min_iterations = curriculum_config['min_iter']
+        # completed_epsilon: 이미 완료한 curriculum을 다시 샘플링했을 때 적용할 exploration 비율.
+        self.completed_epsilon = curriculum_config['completed_epsilon']
+        # reward_buffer: 최근 curriculum reward 평균을 계산하기 위한 고정 길이 buffer.
+        self.reward_buffer = deque(maxlen=curriculum_config['curriculum_mem'])
+        self.save_fig_on_fail = curriculum_config['failure_checks']['save_fig']
+        self.save_model_on_fail = curriculum_config['failure_checks']['save_model']
+        add_rshape_thresh = curriculum_config['add_rshape_goals']
+
+        self.failure_thresh = curriculum_config['failure_checks']
+        # subtask_goals: curriculum 이름별 목표 soup delivery 횟수.
+        self.subtask_goals = curriculum_config['subtask_goals']
+        assert set(self.subtask_goals.keys()).issubset(set(self.failure_thresh.keys())), \
+            "Each subtask goal must have a corresponding failure threshold defined "
+
+        # subtask_iters: curriculum 이름별로 샘플링된 횟수.
+        self.subtask_iters = {}
+        for key in self.subtask_goals.keys():
+            self.subtask_iters[key] = 0
+
+        # Set up curriculum advancment thresholds ------------
+        time_cost = self.env.time_cost
+        timecost_offset = self.env.horizon*time_cost
+        soup_reward = 20
+
+        # curriculum_step_threshs: 각 curriculum을 통과하기 위한 reward 평균 threshold.
+        self.curriculum_step_threshs = {}
+        for key, num_soups in self.subtask_goals.items():
+            shaped_rewards = 0
+            # add shaped rewards to goal
+            if add_rshape_thresh:
+                if key in ['pick_up_soup']:
+                    shaped_rewards +=  self.mdp.reward_shaping_params['SOUP_PICKUP_REWARD']
+                if key in ['pick_up_dish']:
+                    shaped_rewards += self.mdp.reward_shaping_params['SOUP_PICKUP_REWARD']
+                    shaped_rewards += self.mdp.reward_shaping_params['DISH_PICKUP_REWARD']
+                if 'deliver_onion' in key or 'pick_up_onion' in key:
+                    n = 4-int(key[-1])
+                    shaped_rewards += n * self.mdp.reward_shaping_params['PLACEMENT_IN_POT_REW']
+                    shaped_rewards += self.mdp.reward_shaping_params['SOUP_PICKUP_REWARD']
+                    shaped_rewards += self.mdp.reward_shaping_params['DISH_PICKUP_REWARD']
+                elif 'full_task' in key:
+                    n=3
+                    shaped_rewards += n * self.mdp.reward_shaping_params['PLACEMENT_IN_POT_REW']
+                    shaped_rewards += self.mdp.reward_shaping_params['SOUP_PICKUP_REWARD']
+                    shaped_rewards += self.mdp.reward_shaping_params['DISH_PICKUP_REWARD']
+
+            self.curriculum_step_threshs[key] = (soup_reward + shaped_rewards) * num_soups + timecost_offset
+
+
+
+        # curriculums: 실제 curriculum 진행 순서가 되는 subtask 이름 리스트.
+        self.curriculums = list(self.curriculum_step_threshs.keys())
+
+
+        # Use Motion Planner to get distance to goal ------------
+        # mp/navigation_dist_hash: goal 근처 시작 위치를 빠르게 찾기 위한 거리 계산/캐시.
+        self.mp = MotionPlanner(self.mdp)
+        self.navigation_dist_hash = {}
+        finite_dists = np.where(np.isfinite(self.mp.graph_problem.distance_matrix))
+        # _max_dist2goal: layout 안에서 goal까지의 최대 유한 이동 거리.
+        self._max_dist2goal = np.max(self.mp.graph_problem.distance_matrix[finite_dists])
+        self.start_near_goal_iters = kwargs.pop('start_near_goal_iters', 1)
+
+
+    #########################################################################################################
+    # Curriculum Sampling ###################################################################################
+    def step_curriculum(self, reward):
+        """최근 reward 평균이 threshold를 넘으면 다음 curriculum 단계로 이동한다."""
+        self.reward_buffer.append(reward)
+        reward_thresh = self.curriculum_step_threshs[self.curriculums[self.current_curriculum]]
+        if (
+                np.mean(self.reward_buffer) >= reward_thresh
+                and self.current_curriculum < len(self.curriculums) - 1
+                and self.iteration > self.min_iterations
+        ):
+            self.current_curriculum += 1
+            self.iteration = 0
+            return True
+        self.iteration += 1
+        return False
+
+    def pdf_curriculum_sample(self,curriculum_step,interpolate=False):
+        """정규분포 기반으로 현재 단계 주변의 curriculum index를 샘플링한다."""
+        n_curr = len(self.curriculums) - 1
+        mu = curriculum_step
+        variance = 0.5
+        max_deviation = 3
+        sigma = math.sqrt(variance)
+
+        if interpolate and self.curriculums[curriculum_step] != 'full_task':
+            reward_thresh = self.curriculum_step_threshs[self.curriculums[self.current_curriculum]]
+            prog = np.mean(self.reward_buffer)/reward_thresh
+            mu += prog
+
+        x = np.linspace(min(0, mu - max_deviation * sigma), min(n_curr, mu + max_deviation * sigma), 100)
+        p_samples = stats.norm.pdf(x, mu, sigma)
+        p_samples = p_samples / np.sum(p_samples)
+        xi = np.random.choice(x, p=p_samples)
+        return xi
+
+
+    def deliver_onion(self,N, state,p=0.5):
+        """양파 N개를 냄비에 넣는 subtask를 위해 pot/held object 상태를 구성한다."""
+
+        situation = np.random.choice([0, 1], p=[p, 1-p])
+        if situation == 0:
+            """Other onions already in pot, onion N on the way"""
+            n_onions = N-1
+            held_objs = [["onion", None], [None, "onion"]]
+            held_objs = held_objs[np.random.randint(len(held_objs))]  # randomly select one of the held objects to be an onion
+        else:
+            """onion 2 on the way, need to deliver anouther"""
+            n_onions = max(0,N-2)
+            held_objs = ["onion", "onion"]
+
+        onions_in_play = n_onions + np.sum([1  for obj in held_objs if obj=='onion'])
+        # assert onions_in_play == N, f"(DELIVER) Total number of onions in play ({onions_in_play})mismatched with specified {N} onions"
+        assert n_onions >= 0 and n_onions <= 3, "Number of onions must be between 0 and 3"
+
+        state = self.add_held_objs(state, held_objs)
+        state = self.add_onions_to_pots(state, n_onions=n_onions)
+        return state
+
+    def pickup_onion(self,N,state,p=0.5):
+        """양파 pickup subtask를 위해 pot에 들어간 양파 수와 agent 보유 물체를 구성한다."""
+        situation = np.random.choice([0, 1], p=[p, 1-p])
+        if situation == 0:
+            """Onion N-1 already in pot, need to pick up onion"""
+            n_onions = N-1
+            held_objs = [None, None]
+        else:
+            """onion N-1 on the way, need to pick up onion N"""
+            n_onions = max(0,N-2)
+            held_objs = [["onion", None], [None, "onion"]]
+
+        # onions_in_play = n_onions + np.sum([1 for obj in held_objs if obj == 'onion'])
+        # assert onions_in_play == N-1, f"Total number of onions in play mismatched with specified {N} onions"
+        assert n_onions >= 0 and n_onions <= 3, "Number of onions must be between 0 and 3"
+
+        state = self.add_held_objs(state, held_objs)
+        state = self.add_onions_to_pots(state, n_onions=n_onions)
+        return state
+
+    def sample_curriculum_state(self, pdf_sample=False):
+        """현재 curriculum 진행도에 맞춰 subtask를 고르고 그에 맞는 시작 state를 생성한다."""
+
+        if pdf_sample:
+            i = self.pdf_curriculum_sample(self.current_curriculum)
+        else:
+            pi = [self.sampling_decay**(self.current_curriculum-i) for i in range(self.current_curriculum+1)]
+            i = np.random.choice(np.arange(self.current_curriculum+1), p=np.array(pi)/np.sum(pi))
+
+        self.sampled_curriculum = self.curriculums[i]
+        state = self.init_random_state()
+
+        if self.curriculums[i] == 'full_task':
+            state = self.env.state # undo random start loc
+
+        elif 'deliver_onion' in self.curriculums[i]:
+            N = int(self.curriculums[i][-1])  # number of onions to deliver
+            state = self.deliver_onion(N, state)
+        elif 'pick_up_onion' in self.curriculums[i]:
+            N = int(self.curriculums[i][-1])  # number of onions to deliver
+            state = self.deliver_onion(N, state)  # -> 여기가 deliver_onion이 아니라 pick_up_onion으로 바뀌어야하는 거 아닌가?
+
+        elif self.curriculums[i] == 'pick_up_dish':
+            """
+            Initiate pot with soup finished cooking
+            - other pots partially filled = likely since already waited for soup to cook
+            """
+            situation = np.random.choice([0, 1], p=[0.5, 0.5])
+            if situation == 0:
+                """3 onion already in pot, mobody has onion"""
+                n_onions = 3
+                held_objs = [None, None]
+                cooking_tick = np.random.randint(0,20)
+            else:
+                "onion 3 on its way, need to pick up dish"
+                n_onions = 2
+                held_objs = [["onion", None],[None,"onion"]]
+                cooking_tick = None
+
+            state = self.add_held_objs(state, held_objs)
+            state = self.add_onions_to_pots(state, n_onions=n_onions, cooking_tick=cooking_tick)  # finished soup is cooked
+
+        elif self.curriculums[i] == 'pick_up_soup':
+            """
+            Initiate pot with finished soup and [P1 or P2] holding plate
+            - more than one soup finished cooking is unlikely
+            - other pots partially filled = likely since already waited for soup to cook
+            - both holding plate is unnecessary
+            """
+            # Decide who is holding dish and other is holding rand object
+            n_onions = 3
+            partner_item = np.random.choice([None, "onion"], p=[0.9, 0.1])
+            held_objs = [["dish", partner_item], [partner_item , "dish"]]
+            cooking_tick = 20
+
+            state = self.add_held_objs(state, held_objs)
+            state = self.add_onions_to_pots(state, n_onions = n_onions, cooking_tick=cooking_tick)  # finished soup is cooked
+
+
+        elif self.curriculums[i] == 'deliver_soup':
+            """
+            Init [P1 or P2] with held soup 
+            - both holding soup is unnecessary 
+            - randomize other player held object
+            - one pot likely empty and others likely partial filled
+            """
+            n_onions = 0
+            partner_item = np.random.choice([None, "onion"], p=[0.9, 0.1])
+            held_objs = [["soup",partner_item],  [ partner_item, "soup"]]
+            cooking_tick = None
+
+            state = self.add_held_objs(state, held_objs)
+            state = self.add_onions_to_pots(state, n_onions=n_onions, cooking_tick=cooking_tick)  # finished soup is cooked
+
+            for player in state.players:
+                if player.has_object() and player.get_object().name=='soup':
+                    self.assign_dist2goal_start_loc(state, player, 'pot',distance=1)  # start near pot
+                    break
+
+        else:
+            raise ValueError(f"Invalid curriculum mode '{self.curriculums[i]}'")
+        return state, self.sampled_curriculum
+
+    def eval(self,status):
+        """Evaluation 모드에서 curriculum 설정을 바꾸기 위한 hook. 현재 구현은 no-op이다."""
+        # if status.lower() == 'on': self.set_curriculum(**self.default_params)
+        # elif status.lower() == 'off':  self.set_curriculum(**self.curriculums[self.current_curriculum])
+        # else: raise ValueError(f"Invalid curriculum test mode status '{status}'. Use 'on' or 'off'")
+        pass
+
+    ########################################################################################################
+    # START STATE FUNCTIONS ################################################################################
+
+    # agent 위치와 held object가 랜덤화된 시작 state를 생성한다.
+    def init_random_state(self):
+        """generates random state locations and held objects"""
+        random_state = self.mdp.get_random_start_state_fn(random_start_pos=True, rnd_obj_prob_thresh=0.0)()
+        return random_state
+
+    # exclude 위치를 제외하고 player의 시작 위치를 랜덤하게 배정한다.
+    def assign_random_start_loc(self, player, exclude=()):
+        """ Samples a random start location for the player, excluding specified positions."""
+        valid_pos = self.mdp.get_valid_player_positions()
+        for pos in exclude:
+            valid_pos.remove(pos)
+        valid_pos = valid_pos[np.random.randint(len(valid_pos))]
+        player.update_pos_and_or(valid_pos, player.orientation)
+
+    # goal asset에서 distance 이내인 위치 중 하나를 player 시작 위치로 배정한다.
+    def assign_dist2goal_start_loc(self, state, player, goal,distance):
+        """ Samples random start location for player, near (depending on iter) goal asset location."""
+        if distance >= self._max_dist2goal:
+            return # no need to add start loc if distance is max
+
+        # Sekect goal asset location
+        if goal == "serving":  # start at pot
+            locs = self.mdp.get_serving_locations()
+        elif goal == "onion":  # start at onion dispenser
+            locs = self.mdp.get_onion_dispenser_locations()
+        elif goal == "dish":  # start at dish dispenser
+            locs = self.mdp.get_dish_dispenser_locations()
+        elif goal == "pot":  # start at pot
+            # locs = self.mdp.get_pot_locations()
+            locs = None
+            pot_states = self.mdp.get_pot_states(state)
+            for key in ['ready', 'cooking', '2_items', '1_items', "empty"]:
+                if len(pot_states[key]) > 0:
+                    # print('sampled pot state:', key, 'with', len(pot_states[key]), 'pots')
+                    locs = pot_states[key]
+                    break
+            assert locs is not None, "No pots found in state to start at"
+
+        else:
+            raise ValueError(f"Invalid goal type '{goal}' for logical start location")
+        goal_pos = locs[np.random.randint(len(locs))]
+
+        # Get walkable space next to dispenser, pot, ect
+        valid_terrain = (" ", "1", "2")
+        if self.mdp.get_terrain_type_at_pos(goal_pos) not in valid_terrain:
+            for d in Direction.ALL_DIRECTIONS:
+                adj_goal_pos = Action.move_in_direction(goal_pos, d)
+
+                if (0<= adj_goal_pos[0] <= np.array(self.mdp.terrain_mtx).shape[0]-1
+                        and 0<= adj_goal_pos[1] <= np.array(self.mdp.terrain_mtx).shape[1]-1):
+
+                    terrain = self.mdp.get_terrain_type_at_pos(adj_goal_pos)
+                    if terrain in valid_terrain:
+                        goal_pos = adj_goal_pos
+                        break
+
+        # Find start positions within desired distance
+        valid_start_pos = []
+        for start_pos in self.mdp.get_valid_player_positions():
+            hash_str = f'{goal_pos}_{start_pos}'
+            dist = self.navigation_dist_hash.get(hash_str, self.mp.get_gridworld_pos_distance(start_pos, goal_pos))
+            self.navigation_dist_hash[hash_str] = dist
+
+            if dist < distance:
+                valid_start_pos.append(start_pos)
+
+        start_pos = valid_start_pos[np.random.randint(len(valid_start_pos))]
+
+        # Reassign player if already in start pos
+        for _ip, _player in enumerate(state.players):
+            if _player.position == start_pos:
+                self.assign_random_start_loc(_player, exclude=[start_pos])
+
+        player.update_pos_and_or(start_pos, player.orientation)
+
+        assert state.players[0].position != state.players[1].position, "Players cannot start at the same position"
+
+
+    def add_onions_to_pots(self, state, n_onions,cooking_tick=None):
+        """state의 빈 pot 중 하나에 n_onions개 양파가 들어간 soup 상태를 추가한다."""
+        assert n_onions >= 0 or n_onions <= 3, "Number of onions must be between 0 and 3"
+        pots = self.mdp.get_pot_states(state)["empty"]
+        # onion_quants = n_onions * np.eye(self.mdp.num_pots)[np.random.choice(self.mdp.num_pots)]  # which pot is filled
+        onion_quants = n_onions * np.eye(len(pots),dtype=int)[np.random.choice(len(pots))]  # which pot is filled
+
+        # assert len(onion_quants)==len(pots), "Number of pots must match number of onion quantities"
+        for n_onion,pot_loc in zip(onion_quants,pots):
+            if cooking_tick is None:
+                cooking_tick = np.random.randint(0, 20) if n_onion == 3 else -1
+            if n_onion > 0:
+                state.objects[pot_loc] = SoupState.get_soup(
+                    pot_loc,
+                    num_onions=n_onion,
+                    num_tomatoes=0,
+                    cooking_tick=cooking_tick,
+                )
+        return state
+
+    # agent 2명의 held object를 설정한다.
+    def add_held_objs(self, state, objs):
+        """ Adds held objects to players in the state. If list of objects is 2D, randomly selects a posibility."""
+        if len(np.shape(objs)) ==2:
+            objs = objs[np.random.randint(len(objs))]
+        elif len(np.shape(objs)) >2:
+            raise ValueError(f'invalid dim {np.shape(objs)} for held object possibilities')
+
+        # For each player, add a random object with prob rnd_obj_prob_thresh
+        for obj,player in zip(objs,state.players):
+            if obj is not None:
+                self.add_held_obj(player, obj)
+        return state
+
+    def add_held_obj(self, player, obj):
+        """단일 player에게 onion/dish/soup 중 하나를 들고 있는 상태로 설정한다."""
+        if obj == "soup":
+            player.set_object(SoupState.get_soup(player.position, num_onions=3, num_tomatoes=0, finished=True))
+        else:
+            player.set_object(ObjectState(obj, player.position))
+        return player
+
+    # reachable counter 위에 낮은 확률로 onion/dish/soup object를 추가한다.
+    def add_random_counter_state(self, state, rnd_obj_prob_thresh=0.025):
+        """ adds random object to counters """
+        counters = self.mdp.reachable_counters
+        for counter_loc in counters:
+            p = np.random.rand()
+            if p < rnd_obj_prob_thresh:
+                obj = np.random.choice(["onion", "dish", "soup"], p=[0.6, 0.2, 0.2])
+                if obj == "soup":
+                    state.add_object(SoupState.get_soup(counter_loc, num_onions=3, num_tomatoes=0, finished=True))
+                else:
+                    state.add_object(ObjectState(obj, counter_loc))
+        return state
+
+    #########################################################################################################
+    # Curriculum Status  ###################################################################################
+    # 현재 curriculum에서 학습 진행이 failure threshold를 넘었는지 확인한다.
+    def is_failing(self, training_iter, total_iter):
+        """ checks if model learning is failing to progress efficiently"""
+        training_prog = training_iter / total_iter
+        if self.failure_thresh['enable']:
+            return (training_prog > self.failure_thresh[self.curr_curriculum_name])
+        else:
+            return False
+
+    # curriculum rollout 중 state를 새로 샘플링해야 하는지 판단한다.
+    def is_reset_needed(self, state, reward, info):
+        """
+        Determines when to reset game
+        Goal of each curriculum is to deliver 1 soup except for full_task
+        - slipping reset does not produce good results
+        """
+
+        if not self.sampled_curriculum == 'full_task':
+            # if reward == 20: return True # reward for delivering soup
+            # # elif len(state.all_objects_list) ==0: return True # lost all objects
+
+            was_soup_delivered = np.any(info['mdp_info']['event_infos']['soup_delivery'])
+            # no_held_objs = np.all([player.has_object() for player in state.players])
+            # was_onion_slip = np.any(info['mdp_info']['event_infos']['onion_slip'])
+            # was_dish_slip = np.any(info['mdp_info']['event_infos']['dish_slip'])
+
+            if was_soup_delivered:
+                return True  # delivering soup
+            # if 'onion' in self.sampled_curriculum and was_onion_slip and no_held_objs:
+            #     return True # onion slipped
+            # if 'dish' in self.sampled_curriculum and was_dish_slip and no_held_objs:
+            #     return True
+        return False
+
+    ########################################################################################################
+    # Properties ###########################################################################################
+    @property
+    def num_curriculums(self):
+        """전체 curriculum 단계 개수를 반환한다."""
+        return len(self.curriculums)
+
+    @property
+    def curr_curriculum_name(self):
+        """현재 활성화된 curriculum 이름을 반환한다."""
+        return self.curriculums[self.current_curriculum]
+
+    @property
+    def desired_dist2goal(self):
+        """subtask 반복 횟수에 따라 goal 근처 시작 거리 범위를 점진적으로 넓힌다."""
+        it = self.subtask_iters[self.sampled_curriculum]
+        prog = it / self.start_near_goal_iters
+        # prog = self.iteration/self.start_near_goal_iters
+        dist = np.clip(round(prog*self._max_dist2goal),1,self._max_dist2goal+1)
+        return dist
