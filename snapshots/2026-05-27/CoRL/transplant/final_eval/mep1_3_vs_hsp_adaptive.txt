@@ -1,0 +1,1 @@
+eval summary mep1_3-hsp_adaptive: sparse=0, shaped=5.0625, agent0_sparse=0, agent1_sparse=0
