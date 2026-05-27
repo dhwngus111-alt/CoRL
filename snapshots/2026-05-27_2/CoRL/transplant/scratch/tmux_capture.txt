@@ -1,0 +1,1599 @@
+(base) isl_jhoh@islgpu2:~/CoRL$ conda activate corl
+(corl) (corl) isl_jhoh@islgpu2:~/CoRL$ cd /home/isl_jhoh/CoRL
+                                        onda activate corl
+                                       cd /home/isl_jhoh/CoRL
+(corl) (corl) isl_jhoh@islgpu2:~/CoRL$ cd /home/isl_jhoh/CoRL
+
+export CUDA_VISIBLE_DEVICES=3
+export NUM_ENV_STEPS=120000
+export SEED_MAX=36
+
+# 0. 환경 / policy config 확인
+bash transplant/scripts/00_check_env.sh
+
+# 1. MEP S1 policy pool 학습
+bash transplant/scripts/01_train_mep_s1_risky.sh
+
+# 2. MEP S1 checkpoint 추출
+/home/isl_jhoh/miniconda3/envs/corl/bin/python transplant/scripts/02_extract_mep_s1_risky.py
+
+# 3. HSP S1 biased pair 36개 학습
+bash transplant/scripts/03_train_hsp_s1_risky.sh
+
+# 4. HSP S1 actor checkpoint 추출
+/home/isl_jhoh/miniconda3/envs/corl/bin/python transplant/scripts/04_extract_hsp_s1_risky.py
+
+# 5. Greedy selection용 event feature 평가 (HSP eval_events 방식: 100/100)
+bash transplant/scripts/05_eval_events_risky.sh
+
+bash transplant/scripts/09_eval_hsp_risky.sheads=1, eval_episodes=32)extract_hsp_s2_risky.py--layout risky_multipath --k 18
+
+
+
+=== [00] Risky 환경 확인 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+bootstrap:
+  transplant_root: /home/isl_jhoh/CoRL/transplant
+  corl_root: /home/isl_jhoh/CoRL
+  hsp_root: /home/isl_jhoh/CoRL/HSP
+  risky_root: /home/isl_jhoh/CoRL/risky
+  risky_src: /home/isl_jhoh/CoRL/risky/src
+  compat_root: /home/isl_jhoh/CoRL/transplant/compat
+  policy_pool_root: /home/isl_jhoh/CoRL/transplant/policy_pool
+reset:
+  obs: [(7, 6, 28), (7, 6, 28)]
+  share_obs: (2, 7, 6, 56)
+  available_actions: (2, 6), uint8
+  render rgb_array: shape=(928, 1056, 3), dtype=uint8, min=0, max=255
+  step 1: action=[3, 5] reward=[[0.0], [0.0]] done=[False, False]
+  step 2: action=[5, 0] reward=[[0.0], [0.0]] done=[False, False]
+  step 3: action=[1, 0] reward=[[0.0], [0.0]] done=[False, False]
+  step 4: action=[1, 2] reward=[[0.0], [0.0]] done=[False, False]
+  step 5: action=[1, 0] reward=[[0.0], [0.0]] done=[False, False]
+last info keys: ['agent_infos', 'mdp_info', 'phi_s', 'phi_s_prime', 'risky_event_counts', 'risky_event_infos', 'shaped_info_by_agent', 'shaped_r_by_agen
+t', 'sparse_r_by_agent', 'step_shaped_info_by_agent', 'stuck', 'vec_shaped_info_by_agent']
+  risky event dim: 38
+  vec_shaped_info_by_agent: (2, 38)
+  render gif: /home/isl_jhoh/CoRL/transplant/results/smoke_render/gifs/risky_multipath/traj_num_1/reward_0.gif
+smoke check complete
+
+
+
+=== [00] Risky 환경 확인 종료 ===
+
+
+
+
+
+=== [01] MEP S1 학습 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+dict_keys(['mep1', 'mep2', 'mep3', 'mep4', 'mep5', 'mep6', 'mep7', 'mep8', 'mep9', 'mep10', 'mep11', 'mep12']) 12 1
+population_size: 12, 12
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 0/36 episodes, total num timesteps 40000/1440000, FPS 1200.
+
+average episode rewards is {'mep1': np.float32(0.31492525)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 1/36 episodes, total num timesteps 80000/1440000, FPS 1200.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 2/36 episodes, total num timesteps 120000/1440000, FPS 1199.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 3/36 episodes, total num timesteps 160000/1440000, FPS 1194.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 4/36 episodes, total num timesteps 200000/1440000, FPS 1191.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 5/36 episodes, total num timesteps 240000/1440000, FPS 1188.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 6/36 episodes, total num timesteps 280000/1440000, FPS 1187.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 7/36 episodes, total num timesteps 320000/1440000, FPS 1185.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 8/36 episodes, total num timesteps 360000/1440000, FPS 1182.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 9/36 episodes, total num timesteps 400000/1440000, FPS 1179.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568), 'mep7': np.float32(0.25494075)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 10/36 episodes, total num timesteps 440000/1440000, FPS 1177.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 11/36 episodes, total num timesteps 480000/1440000, FPS 1174.
+
+average episode rewards is {'mep1': np.float32(0.31492525), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 12/36 episodes, total num timesteps 520000/1440000, FPS 1172.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.3449217), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.3899068
+8), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0.
+26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 13/36 episodes, total num timesteps 560000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.3149303), 'mep12': np.float32(0.389906
+88), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 14/36 episodes, total num timesteps 600000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.38990
+688), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(
+0.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 15/36 episodes, total num timesteps 640000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.04498671), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(
+0.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 16/36 episodes, total num timesteps 680000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.2549428), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(
+0.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 17/36 episodes, total num timesteps 720000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.22494951), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0
+.26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 18/36 episodes, total num timesteps 760000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.28492483), 'mep6': np.float32(0.
+26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 19/36 episodes, total num timesteps 800000/1440000, FPS 1168.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+26992568), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 20/36 episodes, total num timesteps 840000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+32979187), 'mep7': np.float32(0.25494075), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 21/36 episodes, total num timesteps 880000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+32979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.2699239), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 22/36 episodes, total num timesteps 920000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+32979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.26992047)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 23/36 episodes, total num timesteps 960000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(0.5396459), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+32979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 24/36 episodes, total num timesteps 1000000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.59962773), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.65958
+375), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.
+32979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 25/36 episodes, total num timesteps 1040000/1440000, FPS 1167.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.49469313), 'mep12': np.float32(0.659583
+75), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.3
+2979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 26/36 episodes, total num timesteps 1080000/1440000, FPS 1166.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6595837
+5), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.32
+979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 27/36 episodes, total num timesteps 1120000/1440000, FPS 1166.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.41972426), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.329
+79187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 28/36 episodes, total num timesteps 1160000/1440000, FPS 1165.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.134913), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.3297
+9187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 29/36 episodes, total num timesteps 1200000/1440000, FPS 1165.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(0.5396472), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.32
+979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 30/36 episodes, total num timesteps 1240000/1440000, FPS 1164.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(0.35978222), 'mep6': np.float32(0.32
+979187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 31/36 episodes, total num timesteps 1280000/1440000, FPS 1164.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(1.0039619), 'mep6': np.float32(0.329
+79187), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 32/36 episodes, total num timesteps 1320000/1440000, FPS 1164.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(1.0039619), 'mep6': np.float32(0.809
+16655), 'mep7': np.float32(0.5696306), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 33/36 episodes, total num timesteps 1360000/1440000, FPS 1164.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(1.0039619), 'mep6': np.float32(0.809
+16655), 'mep7': np.float32(1.3685923), 'mep8': np.float32(0.4197375), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 34/36 episodes, total num timesteps 1400000/1440000, FPS 1163.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(1.0039619), 'mep6': np.float32(0.809
+16655), 'mep7': np.float32(1.3685923), 'mep8': np.float32(1.2736833), 'mep9': np.float32(0.74954045)}
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 35/36 episodes, total num timesteps 1440000/1440000, FPS 1163.
+
+average episode rewards is {'mep1': np.float32(1.3585991), 'mep10': np.float32(0.5843905), 'mep11': np.float32(0.7042675), 'mep12': np.float32(0.6892967
+), 'mep2': np.float32(0.8241458), 'mep3': np.float32(0.23974189), 'mep4': np.float32(1.0788819), 'mep5': np.float32(1.0039619), 'mep6': np.float32(0.809
+16655), 'mep7': np.float32(1.3685923), 'mep8': np.float32(1.2736833), 'mep9': np.float32(1.3186389)}
+
+
+
+=== [01] MEP S1 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep1/actor_periodic_80000.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/mep/s1/mep1_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep1/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep1_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep1/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep1_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep2/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant
+/policy_pool/risky_multipath/mep/s1/mep2_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep2/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep2_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep2/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep2_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep3/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant
+/policy_pool/risky_multipath/mep/s1/mep3_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep3/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep3_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep3/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep3_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep4/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant
+/policy_pool/risky_multipath/mep/s1/mep4_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep4/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep4_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep4/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep4_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep5/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant
+/policy_pool/risky_multipath/mep/s1/mep5_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep5/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep5_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep5/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep5_final_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep6/actor_periodic_0.pt -> /home/isl_jhoh/CoRL/transplant
+/policy_pool/risky_multipath/mep/s1/mep6_init_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run1/models/mep6/actor_periodic_160000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep6_mid_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mep/mep-S1/run2/models/mep6/actor_periodic_240000.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/mep/s1/mep6_final_actor.pt
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/eval.yml
+
+
+
+=== [03] HSP S1 학습 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+=== HSP S1 seed 1/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run37/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1289.
+
+average episode rewards agent 0 is 2.212337017059326
+average episode rewards agent 1 is 0.24000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is 1.6946309804916382
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1285.
+
+average episode rewards agent 0 is 15.818224906921387
+average episode rewards agent 1 is 0.75
+=== HSP S1 seed 2/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run38/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1288.
+
+average episode rewards agent 0 is 2.367459774017334
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1285.
+
+average episode rewards agent 0 is 19.856916427612305
+average episode rewards agent 1 is 0.5099999904632568
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1281.
+
+average episode rewards agent 0 is 35.88023376464844
+average episode rewards agent 1 is 0.6000000238418579
+=== HSP S1 seed 3/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run39/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1295.
+
+average episode rewards agent 0 is 3.0203137397766113
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1286.
+
+average episode rewards agent 0 is 11.234889030456543
+average episode rewards agent 1 is 0.6000000238418579
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1283.
+
+average episode rewards agent 0 is 32.8388557434082
+average episode rewards agent 1 is 1.0499999523162842
+=== HSP S1 seed 4/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run40/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1299.
+
+average episode rewards agent 0 is 14.019309043884277
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1283.
+
+average episode rewards agent 0 is 23.00619125366211
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1281.
+
+average episode rewards agent 0 is 29.341646194458008
+average episode rewards agent 1 is 0.9900000095367432
+=== HSP S1 seed 5/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run41/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1285.
+
+average episode rewards agent 0 is -12.978256225585938
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1284.
+
+average episode rewards agent 0 is -2.8530192375183105
+average episode rewards agent 1 is 0.6899999976158142
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1277.
+
+average episode rewards agent 0 is -3.5910816192626953
+average episode rewards agent 1 is 1.1100000143051147
+=== HSP S1 seed 6/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run42/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1293.
+
+average episode rewards agent 0 is 11.648401260375977
+average episode rewards agent 1 is 0.38999998569488525
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1295.
+
+average episode rewards agent 0 is 20.13262939453125
+average episode rewards agent 1 is 0.6000000238418579
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1299.
+
+average episode rewards agent 0 is 53.56403732299805
+average episode rewards agent 1 is 0.8999999761581421
+=== HSP S1 seed 7/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run43/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1282.
+
+average episode rewards agent 0 is 3.614398956298828
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1282.
+
+average episode rewards agent 0 is 16.121484756469727
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1273.
+
+average episode rewards agent 0 is 57.95197296142578
+average episode rewards agent 1 is 0.6000000238418579
+=== HSP S1 seed 8/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run44/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1291.
+
+average episode rewards agent 0 is -15.694160461425781
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1279.
+
+average episode rewards agent 0 is -4.414745330810547
+average episode rewards agent 1 is 0.7799999713897705
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1271.
+
+average episode rewards agent 0 is -1.1254793405532837
+average episode rewards agent 1 is 1.559999942779541
+=== HSP S1 seed 9/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run45/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1291.
+
+average episode rewards agent 0 is -15.07904052734375
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1284.
+
+average episode rewards agent 0 is -3.8740861415863037
+average episode rewards agent 1 is 0.6299999952316284
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1284.
+
+average episode rewards agent 0 is -0.92619788646698
+average episode rewards agent 1 is 2.009999990463257
+=== HSP S1 seed 10/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run46/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1289.
+
+average episode rewards agent 0 is -19.334285736083984
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1291.
+
+average episode rewards agent 0 is -2.221325635910034
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1290.
+
+average episode rewards agent 0 is -7.7055535316467285
+average episode rewards agent 1 is 0.9600000381469727
+=== HSP S1 seed 11/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run47/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1285.
+
+average episode rewards agent 0 is -0.4686395227909088
+average episode rewards agent 1 is 0.20999999344348907
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is 1.6697442531585693
+average episode rewards agent 1 is 0.5400000214576721
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1283.
+
+average episode rewards agent 0 is 5.4630327224731445
+average episode rewards agent 1 is 0.7799999713897705
+=== HSP S1 seed 12/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run48/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1290.
+
+average episode rewards agent 0 is -9.013952255249023
+average episode rewards agent 1 is 0.3100000023841858
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1282.
+
+average episode rewards agent 0 is 3.4247214794158936
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1276.
+
+average episode rewards agent 0 is 6.957448959350586
+average episode rewards agent 1 is 1.3799999952316284
+=== HSP S1 seed 13/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run49/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1293.
+
+average episode rewards agent 0 is -3.061279773712158
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1285.
+
+average episode rewards agent 0 is 2.8460936546325684
+average episode rewards agent 1 is 0.6299999952316284
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1280.
+
+average episode rewards agent 0 is 9.218855857849121
+average episode rewards agent 1 is 0.7199999690055847
+=== HSP S1 seed 14/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run50/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1287.
+
+average episode rewards agent 0 is 24.259492874145508
+average episode rewards agent 1 is 0.24000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1282.
+
+average episode rewards agent 0 is 51.284725189208984
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1283.
+
+average episode rewards agent 0 is 75.83430480957031
+average episode rewards agent 1 is 0.9900000095367432
+=== HSP S1 seed 15/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run51/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1300.
+
+average episode rewards agent 0 is -20.340618133544922
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1294.
+
+average episode rewards agent 0 is -6.058285236358643
+average episode rewards agent 1 is 0.6899999976158142
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1291.
+
+average episode rewards agent 0 is -1.982130527496338
+average episode rewards agent 1 is 1.0199999809265137
+=== HSP S1 seed 16/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run52/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1298.
+
+average episode rewards agent 0 is -2.9931719303131104
+average episode rewards agent 1 is 0.20999999344348907
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is -0.09405975788831711
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1285.
+
+average episode rewards agent 0 is 3.8829312324523926
+average episode rewards agent 1 is 1.2300000190734863
+=== HSP S1 seed 17/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run53/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1291.
+
+average episode rewards agent 0 is 8.168095588684082
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1293.
+
+average episode rewards agent 0 is 22.014183044433594
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1287.
+
+average episode rewards agent 0 is 42.72890090942383
+average episode rewards agent 1 is 1.0199999809265137
+=== HSP S1 seed 18/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run54/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1291.
+
+average episode rewards agent 0 is 29.505216598510742
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1282.
+
+average episode rewards agent 0 is 64.56507873535156
+average episode rewards agent 1 is 0.5400000214576721
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1281.
+
+average episode rewards agent 0 is 127.08624267578125
+average episode rewards agent 1 is 0.5400000214576721
+=== HSP S1 seed 19/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run55/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1287.
+
+average episode rewards agent 0 is 16.804895401000977
+average episode rewards agent 1 is 0.24000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1284.
+
+average episode rewards agent 0 is 48.28352737426758
+average episode rewards agent 1 is 0.5400000214576721
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1279.
+
+average episode rewards agent 0 is 69.32992553710938
+average episode rewards agent 1 is 0.75
+=== HSP S1 seed 20/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run56/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1290.
+
+average episode rewards agent 0 is -9.863129615783691
+average episode rewards agent 1 is 0.38999998569488525
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is -3.3680434226989746
+average episode rewards agent 1 is 0.8999999761581421
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1284.
+
+average episode rewards agent 0 is -2.691148042678833
+average episode rewards agent 1 is 1.9300000667572021
+=== HSP S1 seed 21/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run57/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1293.
+
+average episode rewards agent 0 is 5.250832557678223
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1282.
+
+average episode rewards agent 0 is 16.969932556152344
+average episode rewards agent 1 is 0.4000000059604645
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1283.
+
+average episode rewards agent 0 is 30.967548370361328
+average episode rewards agent 1 is 0.5699999928474426
+=== HSP S1 seed 22/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run58/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1298.
+
+average episode rewards agent 0 is -33.991981506347656
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is -7.552570819854736
+average episode rewards agent 1 is 0.32999998331069946
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1289.
+
+average episode rewards agent 0 is -2.9964427947998047
+average episode rewards agent 1 is 0.7199999690055847
+=== HSP S1 seed 23/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run59/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1292.
+
+average episode rewards agent 0 is -10.861400604248047
+average episode rewards agent 1 is 0.24000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1283.
+
+average episode rewards agent 0 is -2.272618293762207
+average episode rewards agent 1 is 0.6599999666213989
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1280.
+
+average episode rewards agent 0 is 1.5186915397644043
+average episode rewards agent 1 is 1.0199999809265137
+=== HSP S1 seed 24/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run60/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1302.
+
+average episode rewards agent 0 is 4.31785249710083
+average episode rewards agent 1 is 0.20999999344348907
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1290.
+
+average episode rewards agent 0 is 17.720470428466797
+average episode rewards agent 1 is 0.6299999952316284
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1284.
+
+average episode rewards agent 0 is 42.58380126953125
+average episode rewards agent 1 is 0.75
+=== HSP S1 seed 25/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run61/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1293.
+
+average episode rewards agent 0 is 10.729533195495605
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1286.
+
+average episode rewards agent 0 is 18.96004295349121
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1282.
+
+average episode rewards agent 0 is 34.64036560058594
+average episode rewards agent 1 is 0.44999998807907104
+=== HSP S1 seed 26/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run62/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1273.
+
+average episode rewards agent 0 is -1.5686312913894653
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1268.
+
+average episode rewards agent 0 is 2.02230167388916
+average episode rewards agent 1 is 0.5099999904632568
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1276.
+
+average episode rewards agent 0 is 1.0080204010009766
+average episode rewards agent 1 is 1.1100000143051147
+=== HSP S1 seed 27/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run63/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1293.
+
+average episode rewards agent 0 is -11.679197311401367
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1290.
+
+average episode rewards agent 0 is -3.316380500793457
+average episode rewards agent 1 is 0.7199999690055847
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1287.
+
+average episode rewards agent 0 is -1.138239860534668
+average episode rewards agent 1 is 1.1399999856948853
+=== HSP S1 seed 28/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run64/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1286.
+
+average episode rewards agent 0 is 22.116865158081055
+average episode rewards agent 1 is 0.15000000596046448
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1287.
+
+average episode rewards agent 0 is 48.97118377685547
+average episode rewards agent 1 is 0.41999998688697815
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1279.
+
+average episode rewards agent 0 is 95.15105438232422
+average episode rewards agent 1 is 0.44999998807907104
+=== HSP S1 seed 29/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run65/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1284.
+
+average episode rewards agent 0 is 30.901601791381836
+average episode rewards agent 1 is 0.30000001192092896
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1263.
+
+average episode rewards agent 0 is 86.36396789550781
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1268.
+
+average episode rewards agent 0 is 124.39410400390625
+average episode rewards agent 1 is 0.6599999666213989
+=== HSP S1 seed 30/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run66/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1286.
+
+average episode rewards agent 0 is -19.831619262695312
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1289.
+
+average episode rewards agent 0 is -5.812921047210693
+average episode rewards agent 1 is 0.48000001907348633
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1289.
+
+average episode rewards agent 0 is -1.4602326154708862
+average episode rewards agent 1 is 1.290000081062317
+=== HSP S1 seed 31/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run67/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1297.
+
+average episode rewards agent 0 is 22.71656608581543
+average episode rewards agent 1 is 0.24000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1284.
+
+average episode rewards agent 0 is 63.16153335571289
+average episode rewards agent 1 is 0.6299999952316284
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1277.
+
+average episode rewards agent 0 is 135.35342407226562
+average episode rewards agent 1 is 0.7300000190734863
+=== HSP S1 seed 32/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run68/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1288.
+
+average episode rewards agent 0 is -12.141514778137207
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1287.
+
+average episode rewards agent 0 is -2.9102728366851807
+average episode rewards agent 1 is 0.5099999904632568
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1288.
+
+average episode rewards agent 0 is -3.4530482292175293
+average episode rewards agent 1 is 1.7999999523162842
+=== HSP S1 seed 33/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run69/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1296.
+
+average episode rewards agent 0 is -28.124448776245117
+average episode rewards agent 1 is 0.41999998688697815
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1285.
+
+average episode rewards agent 0 is -5.999248027801514
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1280.
+
+average episode rewards agent 0 is -2.5883686542510986
+average episode rewards agent 1 is 1.4700000286102295
+=== HSP S1 seed 34/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run70/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1270.
+
+average episode rewards agent 0 is 3.7840497493743896
+average episode rewards agent 1 is 0.44999998807907104
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1271.
+
+average episode rewards agent 0 is 6.186127185821533
+average episode rewards agent 1 is 0.5400000214576721
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1274.
+
+average episode rewards agent 0 is 14.413698196411133
+average episode rewards agent 1 is 1.0800000429153442
+=== HSP S1 seed 35/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run71/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1286.
+
+average episode rewards agent 0 is 10.78793716430664
+average episode rewards agent 1 is 0.27000001072883606
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1272.
+
+average episode rewards agent 0 is 20.93675994873047
+average episode rewards agent 1 is 0.49000000953674316
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1270.
+
+average episode rewards agent 0 is 45.77362060546875
+average episode rewards agent 1 is 0.6100000143051147
+=== HSP S1 seed 36/36 ===
+Pickle dump policy config at /home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run72/policy_config.pkl
+(7, 6, 28)
+(7, 6, 56)
+(7, 6, 28)
+(7, 6, 56)
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 0/3 episodes, total num timesteps 40000/120000, FPS 1291.
+
+average episode rewards agent 0 is 22.052345275878906
+average episode rewards agent 1 is 0.35999998450279236
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 1/3 episodes, total num timesteps 80000/120000, FPS 1286.
+
+average episode rewards agent 0 is 52.460269927978516
+average episode rewards agent 1 is 0.38999998569488525
+
+ Layout risky_multipath Algo mappo Exp hsp-S1 updates 2/3 episodes, total num timesteps 120000/120000, FPS 1283.
+
+average episode rewards agent 0 is 106.13796997070312
+average episode rewards agent 1 is 0.6599999666213989
+
+
+
+=== [03] HSP S1 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run1/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run1/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run10/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp10_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run10/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp10_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run11/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp11_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run11/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp11_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run12/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp12_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run12/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp12_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run13/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp13_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run13/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp13_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run14/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp14_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run14/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp14_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run15/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp15_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run15/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp15_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run16/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp16_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run16/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp16_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run17/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp17_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run17/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp17_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run18/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp18_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run18/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp18_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run19/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp19_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run19/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp19_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run2/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp2_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run2/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp2_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run20/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp20_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run20/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp20_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run21/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp21_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run21/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp21_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run22/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp22_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run22/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp22_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run23/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp23_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run23/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp23_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run24/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp24_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run24/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp24_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run25/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp25_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run25/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp25_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run26/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp26_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run26/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp26_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run27/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp27_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run27/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp27_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run28/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp28_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run28/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp28_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run29/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp29_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run29/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp29_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run3/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp3_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run3/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp3_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run30/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp30_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run30/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp30_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run31/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp31_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run31/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp31_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run32/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp32_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run32/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp32_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run33/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp33_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run33/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp33_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run34/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp34_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run34/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp34_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run35/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp35_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run35/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp35_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run36/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp36_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run36/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp36_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run37/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp1_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run37/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp1_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run38/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp2_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run38/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp2_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run39/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp3_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run39/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp3_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run4/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp4_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run4/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp4_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run40/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp4_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run40/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp4_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run41/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp5_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run41/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp5_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run42/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp6_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run42/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp6_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run43/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp7_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run43/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp7_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run44/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp8_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run44/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp8_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run45/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp9_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run45/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp9_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run46/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp10_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run46/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp10_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run47/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp11_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run47/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp11_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run48/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp12_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run48/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp12_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run49/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp13_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run49/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp13_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run5/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp5_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run5/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp5_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run50/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp14_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run50/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp14_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run51/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp15_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run51/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp15_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run52/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp16_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run52/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp16_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run53/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp17_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run53/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp17_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run54/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp18_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run54/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp18_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run55/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp19_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run55/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp19_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run56/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp20_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run56/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp20_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run57/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp21_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run57/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp21_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run58/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp22_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run58/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp22_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run59/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp23_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run59/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp23_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run6/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp6_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run6/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp6_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run60/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp24_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run60/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp24_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run61/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp25_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run61/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp25_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run62/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp26_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run62/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp26_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run63/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp27_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run63/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp27_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run64/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp28_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run64/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp28_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run65/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp29_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run65/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp29_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run66/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp30_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run66/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp30_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run67/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp31_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run67/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp31_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run68/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp32_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run68/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp32_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run69/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp33_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run69/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp33_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run7/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp7_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run7/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp7_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run70/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp34_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run70/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp34_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run71/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp35_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run71/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp35_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run72/models/actor_agent0_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp36_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run72/models/actor_agent1_periodic_2.pt -> /home/isl_jhoh/CoRL/trans
+plant/policy_pool/risky_multipath/hsp/s1/hsp36_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run8/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp8_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run8/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp8_w1_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run9/models/actor_agent0_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp9_w0_actor.pt
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/mappo/hsp-S1/run9/models/actor_agent1_periodic_0.pt -> /home/isl_jhoh/CoRL/transp
+lant/policy_pool/risky_multipath/hsp/s1/hsp9_w1_actor.pt
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s1/eval.yml
+
+
+
+=== [05] HSP S1 이벤트 평가 시작 ===
+
+
+event eval settings: EVAL_EPISODES=100, N_EVAL_ROLLOUT_THREADS=100
+=== eval hsp1_w0 vs hsp1_w1 ===
+eval summary hsp1_w0-hsp1_w1: sparse=0, shaped=2.51, agent0_sparse=0, agent1_sparse=0
+=== eval hsp1_w1 vs hsp1_w0 ===
+eval summary hsp1_w1-hsp1_w0: sparse=0, shaped=2.56, agent0_sparse=0, agent1_sparse=0
+=== eval hsp2_w0 vs hsp2_w1 ===
+eval summary hsp2_w0-hsp2_w1: sparse=0, shaped=1.32, agent0_sparse=0, agent1_sparse=0
+=== eval hsp2_w1 vs hsp2_w0 ===
+eval summary hsp2_w1-hsp2_w0: sparse=0, shaped=1.47, agent0_sparse=0, agent1_sparse=0
+=== eval hsp3_w0 vs hsp3_w1 ===
+eval summary hsp3_w0-hsp3_w1: sparse=0, shaped=1.89, agent0_sparse=0, agent1_sparse=0
+=== eval hsp3_w1 vs hsp3_w0 ===
+eval summary hsp3_w1-hsp3_w0: sparse=0, shaped=1.77, agent0_sparse=0, agent1_sparse=0
+=== eval hsp4_w0 vs hsp4_w1 ===
+eval summary hsp4_w0-hsp4_w1: sparse=0, shaped=1.56, agent0_sparse=0, agent1_sparse=0
+=== eval hsp4_w1 vs hsp4_w0 ===
+eval summary hsp4_w1-hsp4_w0: sparse=0, shaped=1.38, agent0_sparse=0, agent1_sparse=0
+=== eval hsp5_w0 vs hsp5_w1 ===
+eval summary hsp5_w0-hsp5_w1: sparse=0, shaped=1.18, agent0_sparse=0, agent1_sparse=0
+=== eval hsp5_w1 vs hsp5_w0 ===
+eval summary hsp5_w1-hsp5_w0: sparse=0, shaped=1.24, agent0_sparse=0, agent1_sparse=0
+=== eval hsp6_w0 vs hsp6_w1 ===
+eval summary hsp6_w0-hsp6_w1: sparse=0, shaped=1.26, agent0_sparse=0, agent1_sparse=0
+=== eval hsp6_w1 vs hsp6_w0 ===
+eval summary hsp6_w1-hsp6_w0: sparse=0, shaped=1.44, agent0_sparse=0, agent1_sparse=0
+=== eval hsp7_w0 vs hsp7_w1 ===
+eval summary hsp7_w0-hsp7_w1: sparse=0, shaped=1.29, agent0_sparse=0, agent1_sparse=0
+=== eval hsp7_w1 vs hsp7_w0 ===
+eval summary hsp7_w1-hsp7_w0: sparse=0, shaped=1.23, agent0_sparse=0, agent1_sparse=0
+=== eval hsp8_w0 vs hsp8_w1 ===
+eval summary hsp8_w0-hsp8_w1: sparse=0, shaped=0.93, agent0_sparse=0, agent1_sparse=0
+=== eval hsp8_w1 vs hsp8_w0 ===
+eval summary hsp8_w1-hsp8_w0: sparse=0, shaped=0.84, agent0_sparse=0, agent1_sparse=0
+=== eval hsp9_w0 vs hsp9_w1 ===
+eval summary hsp9_w0-hsp9_w1: sparse=0, shaped=0.63, agent0_sparse=0, agent1_sparse=0
+=== eval hsp9_w1 vs hsp9_w0 ===
+eval summary hsp9_w1-hsp9_w0: sparse=0, shaped=0.78, agent0_sparse=0, agent1_sparse=0
+=== eval hsp10_w0 vs hsp10_w1 ===
+eval summary hsp10_w0-hsp10_w1: sparse=0, shaped=1.62, agent0_sparse=0, agent1_sparse=0
+=== eval hsp10_w1 vs hsp10_w0 ===
+eval summary hsp10_w1-hsp10_w0: sparse=0, shaped=1.68, agent0_sparse=0, agent1_sparse=0
+=== eval hsp11_w0 vs hsp11_w1 ===
+eval summary hsp11_w0-hsp11_w1: sparse=0, shaped=3.32, agent0_sparse=0, agent1_sparse=0
+=== eval hsp11_w1 vs hsp11_w0 ===
+eval summary hsp11_w1-hsp11_w0: sparse=0, shaped=3.55, agent0_sparse=0, agent1_sparse=0
+=== eval hsp12_w0 vs hsp12_w1 ===
+eval summary hsp12_w0-hsp12_w1: sparse=0, shaped=3.93, agent0_sparse=0, agent1_sparse=0
+=== eval hsp12_w1 vs hsp12_w0 ===
+eval summary hsp12_w1-hsp12_w0: sparse=0, shaped=4.03, agent0_sparse=0, agent1_sparse=0
+=== eval hsp13_w0 vs hsp13_w1 ===
+eval summary hsp13_w0-hsp13_w1: sparse=0, shaped=1.8, agent0_sparse=0, agent1_sparse=0
+=== eval hsp13_w1 vs hsp13_w0 ===
+eval summary hsp13_w1-hsp13_w0: sparse=0, shaped=1.5, agent0_sparse=0, agent1_sparse=0
+=== eval hsp14_w0 vs hsp14_w1 ===
+eval summary hsp14_w0-hsp14_w1: sparse=0, shaped=2.62, agent0_sparse=0, agent1_sparse=0
+=== eval hsp14_w1 vs hsp14_w0 ===
+eval summary hsp14_w1-hsp14_w0: sparse=0, shaped=2.65, agent0_sparse=0, agent1_sparse=0
+=== eval hsp15_w0 vs hsp15_w1 ===
+eval summary hsp15_w0-hsp15_w1: sparse=0, shaped=2.49, agent0_sparse=0, agent1_sparse=0
+=== eval hsp15_w1 vs hsp15_w0 ===
+eval summary hsp15_w1-hsp15_w0: sparse=0, shaped=2.4, agent0_sparse=0, agent1_sparse=0
+=== eval hsp16_w0 vs hsp16_w1 ===
+eval summary hsp16_w0-hsp16_w1: sparse=0, shaped=3.09, agent0_sparse=0, agent1_sparse=0
+=== eval hsp16_w1 vs hsp16_w0 ===
+eval summary hsp16_w1-hsp16_w0: sparse=0, shaped=3, agent0_sparse=0, agent1_sparse=0
+=== eval hsp17_w0 vs hsp17_w1 ===
+eval summary hsp17_w0-hsp17_w1: sparse=0, shaped=4.29, agent0_sparse=0, agent1_sparse=0
+=== eval hsp17_w1 vs hsp17_w0 ===
+eval summary hsp17_w1-hsp17_w0: sparse=0, shaped=3.97, agent0_sparse=0, agent1_sparse=0
+=== eval hsp18_w0 vs hsp18_w1 ===
+eval summary hsp18_w0-hsp18_w1: sparse=0, shaped=1.83, agent0_sparse=0, agent1_sparse=0
+=== eval hsp18_w1 vs hsp18_w0 ===
+eval summary hsp18_w1-hsp18_w0: sparse=0, shaped=1.77, agent0_sparse=0, agent1_sparse=0
+=== eval hsp19_w0 vs hsp19_w1 ===
+eval summary hsp19_w0-hsp19_w1: sparse=0, shaped=1.47, agent0_sparse=0, agent1_sparse=0
+=== eval hsp19_w1 vs hsp19_w0 ===
+eval summary hsp19_w1-hsp19_w0: sparse=0, shaped=1.53, agent0_sparse=0, agent1_sparse=0
+=== eval hsp20_w0 vs hsp20_w1 ===
+eval summary hsp20_w0-hsp20_w1: sparse=0, shaped=5.44, agent0_sparse=0, agent1_sparse=0
+=== eval hsp20_w1 vs hsp20_w0 ===
+eval summary hsp20_w1-hsp20_w0: sparse=0, shaped=5.74, agent0_sparse=0, agent1_sparse=0
+=== eval hsp21_w0 vs hsp21_w1 ===
+eval summary hsp21_w0-hsp21_w1: sparse=0, shaped=1.92, agent0_sparse=0, agent1_sparse=0
+=== eval hsp21_w1 vs hsp21_w0 ===
+eval summary hsp21_w1-hsp21_w0: sparse=0, shaped=2.4, agent0_sparse=0, agent1_sparse=0
+=== eval hsp22_w0 vs hsp22_w1 ===
+eval summary hsp22_w0-hsp22_w1: sparse=0, shaped=2.04, agent0_sparse=0, agent1_sparse=0
+=== eval hsp22_w1 vs hsp22_w0 ===
+eval summary hsp22_w1-hsp22_w0: sparse=0, shaped=2.25, agent0_sparse=0, agent1_sparse=0
+=== eval hsp23_w0 vs hsp23_w1 ===
+eval summary hsp23_w0-hsp23_w1: sparse=0, shaped=2.07, agent0_sparse=0, agent1_sparse=0
+=== eval hsp23_w1 vs hsp23_w0 ===
+eval summary hsp23_w1-hsp23_w0: sparse=0, shaped=2.28, agent0_sparse=0, agent1_sparse=0
+=== eval hsp24_w0 vs hsp24_w1 ===
+eval summary hsp24_w0-hsp24_w1: sparse=0, shaped=2.67, agent0_sparse=0, agent1_sparse=0
+=== eval hsp24_w1 vs hsp24_w0 ===
+eval summary hsp24_w1-hsp24_w0: sparse=0, shaped=3.51, agent0_sparse=0, agent1_sparse=0
+=== eval hsp25_w0 vs hsp25_w1 ===
+eval summary hsp25_w0-hsp25_w1: sparse=0, shaped=1.23, agent0_sparse=0, agent1_sparse=0
+=== eval hsp25_w1 vs hsp25_w0 ===
+eval summary hsp25_w1-hsp25_w0: sparse=0, shaped=1.23, agent0_sparse=0, agent1_sparse=0
+=== eval hsp26_w0 vs hsp26_w1 ===
+eval summary hsp26_w0-hsp26_w1: sparse=0, shaped=2.79, agent0_sparse=0, agent1_sparse=0
+=== eval hsp26_w1 vs hsp26_w0 ===
+eval summary hsp26_w1-hsp26_w0: sparse=0, shaped=2.79, agent0_sparse=0, agent1_sparse=0
+=== eval hsp27_w0 vs hsp27_w1 ===
+eval summary hsp27_w0-hsp27_w1: sparse=0, shaped=2.34, agent0_sparse=0, agent1_sparse=0
+=== eval hsp27_w1 vs hsp27_w0 ===
+eval summary hsp27_w1-hsp27_w0: sparse=0, shaped=2.37, agent0_sparse=0, agent1_sparse=0
+=== eval hsp28_w0 vs hsp28_w1 ===
+eval summary hsp28_w0-hsp28_w1: sparse=0, shaped=2.38, agent0_sparse=0, agent1_sparse=0
+=== eval hsp28_w1 vs hsp28_w0 ===
+eval summary hsp28_w1-hsp28_w0: sparse=0, shaped=2.02, agent0_sparse=0, agent1_sparse=0
+=== eval hsp29_w0 vs hsp29_w1 ===
+eval summary hsp29_w0-hsp29_w1: sparse=0, shaped=2.13, agent0_sparse=0, agent1_sparse=0
+=== eval hsp29_w1 vs hsp29_w0 ===
+eval summary hsp29_w1-hsp29_w0: sparse=0, shaped=1.95, agent0_sparse=0, agent1_sparse=0
+=== eval hsp30_w0 vs hsp30_w1 ===
+eval summary hsp30_w0-hsp30_w1: sparse=0, shaped=2.64, agent0_sparse=0, agent1_sparse=0
+=== eval hsp30_w1 vs hsp30_w0 ===
+eval summary hsp30_w1-hsp30_w0: sparse=0, shaped=2.61, agent0_sparse=0, agent1_sparse=0
+=== eval hsp31_w0 vs hsp31_w1 ===
+eval summary hsp31_w0-hsp31_w1: sparse=0, shaped=2.53, agent0_sparse=0, agent1_sparse=0
+=== eval hsp31_w1 vs hsp31_w0 ===
+eval summary hsp31_w1-hsp31_w0: sparse=0, shaped=2.47, agent0_sparse=0, agent1_sparse=0
+=== eval hsp32_w0 vs hsp32_w1 ===
+eval summary hsp32_w0-hsp32_w1: sparse=0, shaped=3.22, agent0_sparse=0, agent1_sparse=0
+=== eval hsp32_w1 vs hsp32_w0 ===
+eval summary hsp32_w1-hsp32_w0: sparse=0, shaped=3.1, agent0_sparse=0, agent1_sparse=0
+=== eval hsp33_w0 vs hsp33_w1 ===
+eval summary hsp33_w0-hsp33_w1: sparse=0, shaped=4.14, agent0_sparse=0, agent1_sparse=0
+=== eval hsp33_w1 vs hsp33_w0 ===
+eval summary hsp33_w1-hsp33_w0: sparse=0, shaped=4.26, agent0_sparse=0, agent1_sparse=0
+=== eval hsp34_w0 vs hsp34_w1 ===
+eval summary hsp34_w0-hsp34_w1: sparse=0, shaped=2.37, agent0_sparse=0, agent1_sparse=0
+=== eval hsp34_w1 vs hsp34_w0 ===
+eval summary hsp34_w1-hsp34_w0: sparse=0, shaped=2.58, agent0_sparse=0, agent1_sparse=0
+=== eval hsp35_w0 vs hsp35_w1 ===
+eval summary hsp35_w0-hsp35_w1: sparse=0, shaped=1.75, agent0_sparse=0, agent1_sparse=0
+=== eval hsp35_w1 vs hsp35_w0 ===
+eval summary hsp35_w1-hsp35_w0: sparse=0, shaped=1.68, agent0_sparse=0, agent1_sparse=0
+=== eval hsp36_w0 vs hsp36_w1 ===
+eval summary hsp36_w0-hsp36_w1: sparse=0, shaped=1.77, agent0_sparse=0, agent1_sparse=0
+=== eval hsp36_w1 vs hsp36_w0 ===
+eval summary hsp36_w1-hsp36_w0: sparse=0, shaped=1.83, agent0_sparse=0, agent1_sparse=0
+
+
+
+=== [05] HSP S1 이벤트 평가 종료 ===
+
+
+selected runs: [1, 3, 4, 9, 11, 15, 16, 17, 18, 19, 20, 22, 24, 25, 28, 31, 33, 34]
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/train.yml
+
+
+
+=== [07] HSP S2 학습 시작 ===
+
+
+dict_keys(['mep1_1', 'mep1_2', 'mep1_3', 'mep2_1', 'mep2_2', 'mep2_3', 'mep3_1', 'mep3_2', 'mep3_3', 'mep4_1', 'mep4_2', 'mep4_3', 'mep5_1', 'mep5_2', '
+mep5_3', 'mep6_1', 'mep6_2', 'mep6_3', 'hsp1', 'hsp3', 'hsp4', 'hsp9', 'hsp11', 'hsp15', 'hsp16', 'hsp17', 'hsp18', 'hsp19', 'hsp20', 'hsp22', 'hsp24',
+'hsp25', 'hsp28', 'hsp31', 'hsp33', 'hsp34']) 36 2
+population_size: 36, 36
+all agent pairs: [('hsp1', 'hsp_adaptive'), ('hsp11', 'hsp_adaptive'), ('hsp15', 'hsp_adaptive'), ('hsp16', 'hsp_adaptive'), ('hsp17', 'hsp_adaptive'),
+('hsp18', 'hsp_adaptive'), ('hsp19', 'hsp_adaptive'), ('hsp20', 'hsp_adaptive'), ('hsp22', 'hsp_adaptive'), ('hsp24', 'hsp_adaptive'), ('hsp25', 'hsp_ad
+aptive'), ('hsp28', 'hsp_adaptive'), ('hsp3', 'hsp_adaptive'), ('hsp31', 'hsp_adaptive'), ('hsp33', 'hsp_adaptive'), ('hsp34', 'hsp_adaptive'), ('hsp4',
+ 'hsp_adaptive'), ('hsp9', 'hsp_adaptive'), ('mep1_1', 'hsp_adaptive'), ('mep1_2', 'hsp_adaptive'), ('mep1_3', 'hsp_adaptive'), ('mep2_1', 'hsp_adaptive
+'), ('mep2_2', 'hsp_adaptive'), ('mep2_3', 'hsp_adaptive'), ('mep3_1', 'hsp_adaptive'), ('mep3_2', 'hsp_adaptive'), ('mep3_3', 'hsp_adaptive'), ('mep4_1
+', 'hsp_adaptive'), ('mep4_2', 'hsp_adaptive'), ('mep4_3', 'hsp_adaptive'), ('mep5_1', 'hsp_adaptive'), ('mep5_2', 'hsp_adaptive'), ('mep5_3', 'hsp_adap
+tive'), ('mep6_1', 'hsp_adaptive'), ('mep6_2', 'hsp_adaptive'), ('mep6_3', 'hsp_adaptive'), ('hsp_adaptive', 'hsp1'), ('hsp_adaptive', 'hsp11'), ('hsp_a
+daptive', 'hsp15'), ('hsp_adaptive', 'hsp16'), ('hsp_adaptive', 'hsp17'), ('hsp_adaptive', 'hsp18'), ('hsp_adaptive', 'hsp19'), ('hsp_adaptive', 'hsp20'
+), ('hsp_adaptive', 'hsp22'), ('hsp_adaptive', 'hsp24'), ('hsp_adaptive', 'hsp25'), ('hsp_adaptive', 'hsp28'), ('hsp_adaptive', 'hsp3'), ('hsp_adaptive'
+, 'hsp31'), ('hsp_adaptive', 'hsp33'), ('hsp_adaptive', 'hsp34'), ('hsp_adaptive', 'hsp4'), ('hsp_adaptive', 'hsp9'), ('hsp_adaptive', 'mep1_1'), ('hsp_
+adaptive', 'mep1_2'), ('hsp_adaptive', 'mep1_3'), ('hsp_adaptive', 'mep2_1'), ('hsp_adaptive', 'mep2_2'), ('hsp_adaptive', 'mep2_3'), ('hsp_adaptive', '
+mep3_1'), ('hsp_adaptive', 'mep3_2'), ('hsp_adaptive', 'mep3_3'), ('hsp_adaptive', 'mep4_1'), ('hsp_adaptive', 'mep4_2'), ('hsp_adaptive', 'mep4_3'), ('
+hsp_adaptive', 'mep5_1'), ('hsp_adaptive', 'mep5_2'), ('hsp_adaptive', 'mep5_3'), ('hsp_adaptive', 'mep6_1'), ('hsp_adaptive', 'mep6_2'), ('hsp_adaptive
+', 'mep6_3')]
+
+ Layout risky_multipath Algo adaptive Exp hsp-S2 updates 0/1 episodes, total num timesteps 120000/120000, FPS 1182.
+
+average episode rewards is {'hsp_adaptive': np.float32(0.22981821)}
+
+
+
+=== [07] HSP S2 학습 종료 ===
+
+
+/home/isl_jhoh/CoRL/transplant/results/RiskyOvercooked/risky_multipath/adaptive/hsp-S2/run1/models/hsp_adaptive/actor_periodic_120000.pt -> /home/isl_jh
+oh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/hsp_adaptive.pt
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/hsp/s2/eval.yml
+
+
+
+=== [09] HSP 최종 평가 시작 ===
+
+
+final eval settings: EVAL_EPISODES=32, N_EVAL_ROLLOUT_THREADS=1
+eval summary hsp_adaptive-mep1_3: sparse=0, shaped=5, agent0_sparse=0, agent1_sparse=0
+eval summary mep1_3-hsp_adaptive: sparse=0, shaped=5.0625, agent0_sparse=0, agent1_sparse=0
+
+
+
+=== [09] HSP 최종 평가 종료 ===
+
+
+(corl) (corl) isl_jhoh@islgpu2:~/CoRL$

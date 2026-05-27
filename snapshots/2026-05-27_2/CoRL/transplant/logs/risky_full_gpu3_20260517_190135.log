@@ -1,0 +1,55 @@
+LOG=/home/isl_jhoh/CoRL/transplant/logs/risky_full_gpu3_20260517_190135.log
+CUDA_VISIBLE_DEVICES=3
+
+
+
+=== [00] Risky 환경 확인 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+bootstrap:
+  transplant_root: /home/isl_jhoh/CoRL/transplant
+  corl_root: /home/isl_jhoh/CoRL
+  hsp_root: /home/isl_jhoh/CoRL/HSP
+  risky_root: /home/isl_jhoh/CoRL/risky
+  risky_src: /home/isl_jhoh/CoRL/risky/src
+  compat_root: /home/isl_jhoh/CoRL/transplant/compat
+  policy_pool_root: /home/isl_jhoh/CoRL/transplant/policy_pool
+reset:
+  obs: [(7, 6, 28), (7, 6, 28)]
+  share_obs: (2, 7, 6, 56)
+  available_actions: (2, 6), uint8
+  render rgb_array: shape=(928, 1056, 3), dtype=uint8, min=0, max=255
+  step 1: action=[2, 3] reward=[[0.0], [0.0]] done=[False, False]
+  step 2: action=[1, 3] reward=[[0.0], [0.0]] done=[False, False]
+  step 3: action=[2, 2] reward=[[0.0], [0.0]] done=[False, False]
+  step 4: action=[1, 2] reward=[[0.0], [0.0]] done=[False, False]
+  step 5: action=[0, 3] reward=[[0.0], [0.0]] done=[False, False]
+last info keys: ['agent_infos', 'mdp_info', 'phi_s', 'phi_s_prime', 'risky_event_counts', 'risky_event_infos', 'shaped_info_by_agent', 'shaped_r_by_agent', 'sparse_r_by_agent', 'step_shaped_info_by_agent', 'stuck', 'vec_shaped_info_by_agent']
+  risky event dim: 38
+  vec_shaped_info_by_agent: (2, 38)
+  render gif: /home/isl_jhoh/CoRL/transplant/results/smoke_render/gifs/risky_multipath/traj_num_1/reward_0.gif
+smoke check complete
+
+
+
+=== [00] Risky 환경 확인 종료 ===
+
+
+
+
+
+=== [01] MEP S1 학습 시작 ===
+
+
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/mlp_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/policy_config/rnn_policy_config.pkl
+wrote /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath/mep/s1/train.yml
+dict_keys(['mep1', 'mep2', 'mep3', 'mep4', 'mep5', 'mep6', 'mep7', 'mep8', 'mep9', 'mep10', 'mep11', 'mep12']) 12 1
+population_size: 12, 12
+
+ Layout risky_multipath Algo mep Exp mep-S1 updates 0/6 episodes, total num timesteps 40000/240000, FPS 1193.
+
+average episode rewards is {'mep1': np.float32(0.315)}
