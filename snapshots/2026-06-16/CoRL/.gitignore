@@ -1,0 +1,25 @@
+# Local Codex/runtime metadata
+.agents/
+.codex
+
+# Nested repository metadata when publishing the CoRL workspace as one repo
+**/.git/
+
+# Python caches
+**/__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.DS_Store
+
+# Experiment outputs that are too large/noisy for GitHub
+test/hsp_many_orders/
+transplant/results/RiskyOvercooked/
+HSP/hsp/scripts/results/
+risky/src/study_1/results/
+risky/src/risky_overcooked_rl/algorithms/DDQN/eval/results/
+risky/testing/outputs/
+
+# W&B local run artifacts
+wandb/
+**/wandb/
