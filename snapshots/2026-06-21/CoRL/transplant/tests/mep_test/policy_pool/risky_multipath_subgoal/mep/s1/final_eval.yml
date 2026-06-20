@@ -1,0 +1,72 @@
+mep1:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep1_final_actor.pt
+mep2:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep2_final_actor.pt
+mep3:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep3_final_actor.pt
+mep4:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep4_final_actor.pt
+mep5:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep5_final_actor.pt
+mep6:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep6_final_actor.pt
+mep7:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep7_final_actor.pt
+mep8:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep8_final_actor.pt
+mep9:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep9_final_actor.pt
+mep10:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep10_final_actor.pt
+mep11:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep11_final_actor.pt
+mep12:
+  policy_config_path: risky_multipath_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: false
+  model_path:
+    actor: risky_multipath_subgoal/mep/s1/mep12_final_actor.pt
