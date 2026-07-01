@@ -1,0 +1,61 @@
+layout: risky_multipath_subgoal
+source_policy_pool: /home/isl_jhoh/CoRL/transplant/policy_pool
+selected_policy_count: 5
+selected_policy_names:
+- mep1
+- mep2
+- mep3
+- mep4
+- mep5
+checkpoints_per_policy: 3
+policies:
+  mep1:
+    init:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep1_init_actor.pt
+      source_kind: policy_pool
+    mid:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep1_mid_actor.pt
+      source_kind: policy_pool
+    final:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep1_final_actor.pt
+      source_kind: policy_pool
+  mep2:
+    init:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep2_init_actor.pt
+      source_kind: policy_pool
+    mid:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep2_mid_actor.pt
+      source_kind: policy_pool
+    final:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep2_final_actor.pt
+      source_kind: policy_pool
+  mep3:
+    init:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep3_init_actor.pt
+      source_kind: policy_pool
+    mid:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep3_mid_actor.pt
+      source_kind: policy_pool
+    final:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep3_final_actor.pt
+      source_kind: policy_pool
+  mep4:
+    init:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep4_init_actor.pt
+      source_kind: policy_pool
+    mid:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep4_mid_actor.pt
+      source_kind: policy_pool
+    final:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep4_final_actor.pt
+      source_kind: policy_pool
+  mep5:
+    init:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep5_init_actor.pt
+      source_kind: policy_pool
+    mid:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep5_mid_actor.pt
+      source_kind: policy_pool
+    final:
+      source: /home/isl_jhoh/CoRL/transplant/policy_pool/risky_multipath_subgoal/mep/s1/mep5_final_actor.pt
+      source_kind: policy_pool

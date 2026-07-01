@@ -1,0 +1,24 @@
+mep_adaptive:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/rnn_policy_config.pkl
+  featurize_type: ppo
+  train: false
+mep1:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: true
+mep2:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: true
+mep3:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: true
+mep4:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: true
+mep5:
+  policy_config_path: risky_mixed_coordination_subgoal/policy_config/mlp_policy_config.pkl
+  featurize_type: ppo
+  train: true
