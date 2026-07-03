@@ -1,0 +1,34 @@
+# Python/cache artifacts
+__pycache__/
+*.py[cod]
+*.so
+
+# Training outputs and local experiment artifacts
+results/
+final_eval/
+logs/
+wandb/
+biased_eval/
+policy_pool/
+tests/mep_test/
+
+# Model/checkpoint artifacts
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# Large archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Local/editor files
+.DS_Store
+.vscode/
+.idea/
+*.log
