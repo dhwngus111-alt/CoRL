@@ -1,0 +1,515 @@
+#!/usr/bin/env python
+"""Evaluate two policies from a transplant population YAML on Risky Overcooked."""
+
+from __future__ import annotations
+
+import csv
+import os
+import re
+import sys
+from pathlib import Path
+
+import numpy as np
+
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from transplant.bootstrap import ensure_paths
+
+ensure_paths()
+
+from hsp.config import get_config  # noqa: E402
+from hsp.envs.env_wrappers import ChooseDummyVecEnv, ChooseSubprocVecEnv  # noqa: E402
+from hsp.algorithms.population.utils import EvalPolicy  # noqa: E402
+
+from transplant.adapters.risky_overcooked_env import CATEGORY_KEYS, RiskyOvercooked  # noqa: E402
+from transplant.common import (  # noqa: E402
+    add_risky_overcooked_args,
+    finish_logging,
+    init_wandb,
+    make_run_dir,
+    normalize_risky_args,
+    set_process_title,
+    set_seeds,
+    setup_device,
+)
+
+
+class RandomEvalPolicy(EvalPolicy):
+    """Uniform-random 파트너: 매 스텝 가능한 행동 중 균등 랜덤을 낸다.
+
+    policy pool의 EvalPolicy 인터페이스(reset/register_control_agent/control_agents/step/to/
+    prep_rollout)만 만족하면 평가 루프에 그대로 꽂힌다. self.policy는 쓰지 않으므로 None.
+    agent 이름 "random"으로 매핑하면 evaluate_policy_pair가 이 정책을 주입한다.
+    """
+
+    def __init__(self, args, num_actions, seed=0):
+        super().__init__(args, policy=None)
+        self.num_actions = int(num_actions)
+        self._rng = np.random.default_rng(int(seed))
+
+    def step(self, obs, agents, deterministic=False, masks=None, **kwargs):
+        # obs: (len(agents), ...) — 관측 무시하고 균등 랜덤. 반환은 agent별 [action].
+        return self._rng.integers(0, self.num_actions, size=(len(agents), 1))
+
+    def to(self, device):
+        return self
+
+    def prep_rollout(self):
+        pass
+
+
+def _render_gif_rank_enabled(all_args, rank: int | None) -> bool:
+    gif_episodes = int(getattr(all_args, "render_eval_gif_episodes", 0) or 0)
+    if gif_episodes <= 0 or rank is None:
+        return False
+    thread_count = int(getattr(all_args, "n_eval_rollout_threads", 1) or 1)
+    gif_episodes = min(gif_episodes, thread_count)
+    return rank >= thread_count - gif_episodes
+
+
+def make_eval_env(all_args, run_dir, *, render_eval_gifs: bool = False):
+    def get_env_fn(rank):
+        def init_env():
+            env = RiskyOvercooked(all_args, run_dir, featurize_type=("ppo", "ppo"), rank=rank)
+            if render_eval_gifs and _render_gif_rank_enabled(all_args, rank):
+                env.use_render = True
+            env.seed(all_args.seed * 50000 + rank * 10000)
+            return env
+
+        return init_env
+
+    if all_args.n_eval_rollout_threads == 1:
+        return ChooseDummyVecEnv([get_env_fn(0)])
+    return ChooseSubprocVecEnv([get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)])
+
+
+def _collect_eval_gif_paths(eval_envs, max_paths: int) -> list[Path]:
+    if max_paths <= 0 or not hasattr(eval_envs, "get_last_render_gif_paths"):
+        return []
+    paths = []
+    try:
+        raw_paths = eval_envs.get_last_render_gif_paths()
+    except Exception as exc:
+        print(f"warning: failed to collect eval GIF paths: {exc}")
+        return []
+    for raw_path in raw_paths:
+        if isinstance(raw_path, (list, tuple)):
+            paths.extend(Path(path) for path in raw_path if path)
+        elif raw_path:
+            paths.append(Path(raw_path))
+    existing_paths = [path for path in paths if path.exists()]
+    existing_paths.sort(key=lambda path: path.stat().st_mtime_ns)
+    return existing_paths[-max_paths:]
+
+
+def parse_args(args, parser):
+    add_risky_overcooked_args(parser, mode="eval")
+    return normalize_risky_args(parser.parse_known_args(args)[0])
+
+
+def _metric_scalar(eval_infos: dict, key: str) -> float | None:
+    values = eval_infos.get(key)
+    if not values:
+        return None
+    return float(values[0])
+
+
+def _write_raw_metrics(eval_infos: dict, output_path: Path | None) -> None:
+    if output_path is None:
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("a") as file:
+        file.write(f"{eval_infos}\n")
+
+
+def _print_eval_summary(all_args, eval_infos: dict) -> None:
+    pair_prefix = f"{all_args.agent0_policy_name}-{all_args.agent1_policy_name}"
+    fields = [
+        ("sparse", f"{pair_prefix}-eval_ep_sparse_r"),
+        ("shaped", f"{pair_prefix}-eval_ep_shaped_r"),
+        ("agent0_sparse", f"{pair_prefix}-eval_ep_sparse_r_by_agent0"),
+        ("agent1_sparse", f"{pair_prefix}-eval_ep_sparse_r_by_agent1"),
+    ]
+    parts = []
+    for label, key in fields:
+        value = _metric_scalar(eval_infos, key)
+        if value is not None:
+            parts.append(f"{label}={value:g}")
+    print(f"eval summary {pair_prefix}: " + ", ".join(parts))
+
+
+def _partner_group(partner: str) -> str:
+    """파트너를 policy_pool / random 두 그룹으로 분류(스펙: {group}_gif, {group}_eval 섹션 분리)."""
+    return "random" if partner == "random" else "policy_pool"
+
+
+def _adaptive_event_rows(all_args, eval_infos: dict) -> list[dict]:
+    agent0 = all_args.agent0_policy_name
+    agent1 = all_args.agent1_policy_name
+    adaptive_name = getattr(all_args, "adaptive_policy_name", "hsp_adaptive")
+    if agent0 == adaptive_name:
+        adaptive_agent_idx = 0
+        partner = agent1
+    elif agent1 == adaptive_name:
+        adaptive_agent_idx = 1
+        partner = agent0
+    else:
+        return []
+
+    pair_prefix = f"{agent0}-{agent1}"
+    rows = []
+    for event_name in CATEGORY_KEYS:
+        key = f"{pair_prefix}-eval_ep_{event_name}_by_agent{adaptive_agent_idx}"
+        value = _metric_scalar(eval_infos, key)
+        if value is None:
+            continue
+        rows.append(
+            {
+                "partner": partner,
+                "partner_group": _partner_group(partner),
+                "direction": f"{agent0}_vs_{agent1}",
+                "adaptive_policy_name": adaptive_name,
+                "adaptive_agent": f"agent{adaptive_agent_idx}",
+                "event": event_name,
+                "count": value,
+            }
+        )
+    return rows
+
+
+def _write_event_table_rows(rows: list[dict], output_path: Path | None) -> None:
+    if output_path is None or not rows:
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not output_path.exists() or output_path.stat().st_size == 0
+    with output_path.open("a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        if write_header:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _score_row(all_args, eval_infos: dict) -> dict | None:
+    agent0 = all_args.agent0_policy_name
+    agent1 = all_args.agent1_policy_name
+    adaptive_name = getattr(all_args, "adaptive_policy_name", "hsp_adaptive")
+    if agent0 == adaptive_name:
+        partner = agent1
+        adaptive_agent = "agent0"
+    elif agent1 == adaptive_name:
+        partner = agent0
+        adaptive_agent = "agent1"
+    else:
+        return None
+
+    pair_prefix = f"{agent0}-{agent1}"
+    score = _metric_scalar(eval_infos, f"{pair_prefix}-eval_ep_sparse_r")
+    if score is None:
+        return None
+    return {
+        "partner": partner,
+        "partner_group": _partner_group(partner),
+        "direction": f"{agent0}_vs_{agent1}",
+        "adaptive_policy_name": adaptive_name,
+        "adaptive_agent": adaptive_agent,
+        "agent0_policy": agent0,
+        "agent1_policy": agent1,
+        "episode_sparse_score": score,
+        "agent0_sparse": _metric_scalar(eval_infos, f"{pair_prefix}-eval_ep_sparse_r_by_agent0"),
+        "agent1_sparse": _metric_scalar(eval_infos, f"{pair_prefix}-eval_ep_sparse_r_by_agent1"),
+    }
+
+
+def _write_score_row(row: dict | None, output_path: Path | None) -> None:
+    if output_path is None or row is None:
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not output_path.exists() or output_path.stat().st_size == 0
+    with output_path.open("a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(row))
+        if write_header:
+            writer.writeheader()
+        writer.writerow(row)
+
+
+def _gif_manifest_rows(all_args, gif_paths: list[Path]) -> list[dict]:
+    if not gif_paths:
+        return []
+    agent0 = all_args.agent0_policy_name
+    agent1 = all_args.agent1_policy_name
+    adaptive_name = getattr(all_args, "adaptive_policy_name", "hsp_adaptive")
+    if agent0 == adaptive_name:
+        partner = agent1
+        adaptive_agent = "agent0"
+    elif agent1 == adaptive_name:
+        partner = agent0
+        adaptive_agent = "agent1"
+    else:
+        return []
+
+    direction = f"{agent0}_vs_{agent1}"
+    gif_label = f"agent0={agent0} | agent1={agent1}"
+    return [
+        {
+            "partner": partner,
+            "partner_group": _partner_group(partner),
+            "direction": direction,
+            "agent0_policy": agent0,
+            "agent1_policy": agent1,
+            "adaptive_policy_name": adaptive_name,
+            "adaptive_agent": adaptive_agent,
+            "gif_label": gif_label,
+            "gif_path": str(path),
+        }
+        for path in gif_paths
+    ]
+
+
+def _write_gif_manifest_rows(rows: list[dict], output_path: Path | None) -> None:
+    if output_path is None or not rows:
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not output_path.exists() or output_path.stat().st_size == 0
+    with output_path.open("a", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        if write_header:
+            writer.writeheader()
+        writer.writerows(rows)
+
+
+def _wandb_key_component(value: str) -> str:
+    value = value.strip()
+    value = re.sub(r"[^A-Za-z0-9_.=-]+", "_", value)
+    return value.strip("_") or "unknown"
+
+
+def _gif_panel_section(section: str | None) -> str:
+    return _wandb_key_component(section or "final_eval_gifs")
+
+
+def _gif_panel_name(row: dict) -> str | None:
+    agent0 = row.get("agent0_policy", "")
+    agent1 = row.get("agent1_policy", "")
+    adaptive_agent = row.get("adaptive_agent", "")
+    adaptive_policy = row.get("adaptive_policy_name", "hsp_adaptive")
+    is_adaptive_pair = adaptive_agent in {"agent0", "agent1"} or agent0 == adaptive_policy or agent1 == adaptive_policy
+    if not is_adaptive_pair:
+        return None
+
+    return "__".join(
+        [
+            f"agent0_{_wandb_key_component(agent0)}",
+            f"agent1_{_wandb_key_component(agent1)}",
+        ]
+    )
+
+
+def _make_gif_panel_payload(gif_rows: list[dict], wandb, panel_section: str = "final_eval_gifs") -> dict:
+    payload = {}
+    for row in gif_rows:
+        partner = row.get("partner", "")
+        gif_path = Path(row.get("gif_path", ""))
+        if not partner or not gif_path.is_file():
+            continue
+        panel_name = _gif_panel_name(row)
+        if panel_name is None:
+            continue
+        # 스펙: partner_group별 섹션(policy_pool_gif / random_gif). group 없으면 설정값 사용.
+        group = str(row.get("partner_group", "") or "")
+        section = _gif_panel_section(f"{group}_gif" if group else panel_section)
+        payload[f"{section}/{panel_name}"] = wandb.Video(str(gif_path), format="gif")
+    return payload
+
+
+def _stream_gif_rows_to_wandb(all_args, gif_rows: list[dict]) -> None:
+    if not getattr(all_args, "stream_eval_gifs_to_wandb", False) or not gif_rows:
+        return
+    run_id = str(getattr(all_args, "stream_gif_wandb_run_id", "") or "").strip()
+    if not run_id:
+        print("warning: streaming eval GIF upload skipped because stream_gif_wandb_run_id is empty")
+        return
+
+    import wandb
+
+    panel_section = getattr(all_args, "gif_panel_section", "final_eval_gifs")
+    payload = _make_gif_panel_payload(gif_rows, wandb, panel_section)
+    if not payload:
+        return
+
+    project = str(getattr(all_args, "stream_gif_wandb_project", "") or all_args.env_name)
+    entity = str(getattr(all_args, "stream_gif_wandb_entity", "") or getattr(all_args, "wandb_name", ""))
+    run_name = str(getattr(all_args, "stream_gif_wandb_run_name", "") or run_id)
+    mode = str(getattr(all_args, "stream_gif_wandb_mode", "") or "online")
+    pair_prefix = f"{all_args.agent0_policy_name}-{all_args.agent1_policy_name}"
+    run = wandb.init(
+        project=project,
+        entity=entity,
+        name=run_name,
+        id=run_id,
+        resume="allow",
+        group=getattr(all_args, "wandb_group_name", "") or f"HSP_{all_args.layout_name}",
+        job_type="evaluation_gif_stream",
+        mode=mode,
+        reinit=True,
+        config={
+            "layout": all_args.layout_name,
+            "pair": pair_prefix,
+            "agent0_policy": all_args.agent0_policy_name,
+            "agent1_policy": all_args.agent1_policy_name,
+            "gif_panel_section": _gif_panel_section(panel_section),
+        },
+        settings=wandb.Settings(
+            start_method=os.environ.get("WANDB_START_METHOD", "thread"),
+            x_disable_stats=True,
+            x_disable_machine_info=True,
+        ),
+    )
+    run.log(payload)
+    run.finish()
+    print(
+        f"streamed {len(payload)} eval GIF(s) to W&B section "
+        f"{_gif_panel_section(panel_section)} (run {run_id})"
+    )
+
+
+def _log_eval_metrics_to_wandb(all_args, eval_infos: dict) -> None:
+    if not all_args.use_wandb:
+        return
+    import wandb
+
+    pair_prefix = f"{all_args.agent0_policy_name}-{all_args.agent1_policy_name}"
+    metrics = {
+        f"final_eval/{pair_prefix}/sparse": _metric_scalar(eval_infos, f"{pair_prefix}-eval_ep_sparse_r"),
+        f"final_eval/{pair_prefix}/shaped": _metric_scalar(eval_infos, f"{pair_prefix}-eval_ep_shaped_r"),
+        f"final_eval/{pair_prefix}/agent0_sparse": _metric_scalar(
+            eval_infos, f"{pair_prefix}-eval_ep_sparse_r_by_agent0"
+        ),
+        f"final_eval/{pair_prefix}/agent1_sparse": _metric_scalar(
+            eval_infos, f"{pair_prefix}-eval_ep_sparse_r_by_agent1"
+        ),
+    }
+    metrics = {key: value for key, value in metrics.items() if value is not None}
+    if getattr(all_args, "log_eval_scalars", False):
+        for key, values in eval_infos.items():
+            if values:
+                metrics[f"final_eval_raw/{pair_prefix}/{key}"] = float(values[0])
+    if metrics:
+        wandb.log(metrics, step=all_args.eval_episodes)
+
+    rows = _adaptive_event_rows(all_args, eval_infos)
+    if rows:
+        table = wandb.Table(columns=list(rows[0]), data=[[row[column] for column in rows[0]] for row in rows])
+        wandb.log({f"final_eval/{pair_prefix}/adaptive_event_counts": table}, step=all_args.eval_episodes)
+
+
+def evaluate_policy_pair(all_args, run_dir=None):
+    """Evaluate the currently configured agent0/agent1 pair without owning logging lifecycle."""
+    device = setup_device(all_args)
+    run_dir = make_run_dir(all_args) if run_dir is None else run_dir
+    set_process_title(all_args)
+    set_seeds(all_args.seed)
+
+    envs = None
+    eval_envs = None
+    runner = None
+    try:
+        envs = make_eval_env(all_args, run_dir)
+        eval_envs = make_eval_env(all_args, run_dir, render_eval_gifs=True)
+        config = {
+            "all_args": all_args,
+            "envs": envs,
+            "eval_envs": eval_envs,
+            "num_agents": all_args.num_agents,
+            "device": device,
+            "run_dir": run_dir,
+        }
+
+        if all_args.share_policy:
+            from transplant.runners.risky_overcooked_runner import RiskyOvercookedRunner as Runner
+        else:
+            from hsp.runner.separated.overcooked_runner import MPERunner as Runner
+
+        runner = Runner(config)
+
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
+
+        # uniform-random 파트너 지원: agent 이름이 "random"이면 yaml 로드 대신 RandomEvalPolicy 주입.
+        for _rand_name in {all_args.agent0_policy_name, all_args.agent1_policy_name}:
+            if _rand_name == "random" and _rand_name not in runner.policy.policy_pool:
+                _num_actions = int(eval_envs.action_space[0].n)
+                runner.policy.register_policy(
+                    _rand_name,
+                    RandomEvalPolicy(all_args, _num_actions, seed=all_args.seed),
+                    [all_args, None, None, None],
+                    False,
+                    [_rand_name, {}],
+                )
+                featurize_type[_rand_name] = "ppo"
+
+        map_ea2p = {}
+        for env_idx in range(all_args.n_eval_rollout_threads):
+            map_ea2p[(env_idx, 0)] = all_args.agent0_policy_name
+            map_ea2p[(env_idx, 1)] = all_args.agent1_policy_name
+        runner.policy.set_map_ea2p(map_ea2p)
+
+        agent0_featurize_type = featurize_type.get(all_args.agent0_policy_name, "ppo")
+        agent1_featurize_type = featurize_type.get(all_args.agent1_policy_name, "ppo")
+        eval_envs.reset_featurize_type(
+            [(agent0_featurize_type, agent1_featurize_type) for _ in range(all_args.n_eval_rollout_threads)]
+        )
+
+        eval_infos = runner.evaluate_with_multi_policy()
+        runner.eval_gif_paths = _collect_eval_gif_paths(
+            eval_envs, int(getattr(all_args, "render_eval_gif_episodes", 0) or 0)
+        )
+        return eval_infos, runner
+    finally:
+        if envs is not None:
+            envs.close()
+        if eval_envs is not None:
+            eval_envs.close()
+
+
+def record_eval_outputs(
+    all_args, eval_infos: dict, *, gif_paths: list[Path] | None = None, log_to_wandb: bool = True
+) -> None:
+    event_rows = _adaptive_event_rows(all_args, eval_infos)
+    score_row = _score_row(all_args, eval_infos)
+    gif_rows = _gif_manifest_rows(all_args, gif_paths or [])
+    _write_raw_metrics(eval_infos, getattr(all_args, "metrics_output_path", None))
+    _write_event_table_rows(event_rows, getattr(all_args, "event_table_output_path", None))
+    _write_score_row(score_row, getattr(all_args, "score_table_output_path", None))
+    _write_gif_manifest_rows(gif_rows, getattr(all_args, "gif_manifest_output_path", None))
+    _stream_gif_rows_to_wandb(all_args, gif_rows)
+    _print_eval_summary(all_args, eval_infos)
+    if log_to_wandb:
+        _log_eval_metrics_to_wandb(all_args, eval_infos)
+
+
+def main(args):
+    parser = get_config()
+    all_args = parse_args(args, parser)
+    assert all_args.algorithm_name == "population"
+    all_args.time_cost = 0.0
+    all_args.wandb_job_type = "evaluation"
+
+    run_dir = make_run_dir(all_args)
+    run = init_wandb(all_args, run_dir)
+    runner = None
+    try:
+        eval_infos, runner = evaluate_policy_pair(all_args, run_dir=run_dir)
+        record_eval_outputs(
+            all_args,
+            eval_infos,
+            gif_paths=getattr(runner, "eval_gif_paths", []),
+        )
+    finally:
+        if runner is not None:
+            finish_logging(all_args, run, runner)
+        elif run is not None:
+            run.finish()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
